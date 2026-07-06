@@ -1,6 +1,10 @@
 -- Contract: Supabase/PostgreSQL schema for Transaction Categorization (feature 001)
 -- Model: SHARED FAMILY HOUSEHOLD ledger, multiple members, EQUAL permissions.
 -- This is the DATA CONTRACT. Executable copy lives in supabase/migrations/.
+-- NOTE (2026-07-06, feature 002): person FKs (household_members.user_id,
+-- *.created_by) were repointed from auth.users to public.users — an INDEPENDENT
+-- app user directory (own PK, no FK to auth). Login sessions map to users via
+-- email (current_user_id()); created_by is set by trigger. See 0011_users.sql.
 -- Traceability tags [FR-xxx]/[SC-xxx]/[Rn] map back to spec.md / research.md.
 -- INCOME = Thu, EXPENSE = Chi
 

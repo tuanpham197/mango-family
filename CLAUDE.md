@@ -8,7 +8,7 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 |----------|--------|
 | Business Requirement (BR) | `specs/business-requirements/BR-*.md` |
 | Feature spec | `specs/<feature>/spec.md` (dẫn xuất từ một BR) |
-| Use case | `specs/use-cases/uc-*.md` (+ `README.md` chỉ mục) |
+| Use case | `specs/use-cases/<feature>/uc-*.md` — gộp theo folder feature, vd `002-transaction-tracking/uc-trk-01-*.md` (+ `README.md` chỉ mục chung) |
 | Use case diagram | `specs/diagrams/use-cases.puml` (+ ảnh `use-cases.png`) |
 | Entity model | `specs/entities/entity-model.md` |
 | Plan & design | `specs/<feature>/plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md` |
@@ -29,13 +29,20 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 
 <!-- SPECKIT START -->
 For technologies, project structure, and other important context, read the current plan:
-`specs/001-transaction-categorization/plan.md`
+`specs/002-transaction-tracking/plan.md`
 
-Active feature: **001-transaction-categorization** (Phân loại giao dịch).
-Model: **shared family household** — multiple members, EQUAL permissions; categories + transactions
-are shared per `household_id` (RLS by membership, isolated across households). Transactions record
-`created_by` (which member entered them). (Reversed original FR-018 per-user — spec.md/BR-001 already reconciled.)
-Stack: Flutter (Dart 3.x, iOS+Android) · Riverpod · Supabase (PostgreSQL + Auth + RLS + Realtime).
-Source lives under **`src/`** (Flutter project root = `src/`): feature-first / Clean Architecture under `src/lib/features/categorization`; `src/lib/core/household` holds current-household context; migrations in `src/supabase/migrations`.
+Active feature: **002-transaction-tracking** (Ghi chép thu nhập & chi phí). Feature
+**001-transaction-categorization** is ✅ implemented & verified (see its spec dir).
+Model: **shared family household** — multiple members, EQUAL permissions; data shared per
+`household_id` (RLS by membership, isolated across households). **Users are an INDEPENDENT
+directory** (`public.users`, own PK, no FK to auth): login sessions map to users **via email**
+(`current_user_id()`); `created_by` is set by DB trigger and references `users.id`.
+Foundational order for 002: **users FIRST** (migration `0011_users.sql`, written) → accounts
+(`0012`, default "Tiền mặt" per household; balance = derived view `account_balances`) →
+transactions v2 (`0013`: `account_id`, `updated_at`, no future dates).
+Stack: Flutter (Dart 3.x, iOS+Android+Web) · Riverpod · Supabase (PostgreSQL + Auth + RLS + Realtime).
+Source lives under **`src/`** (Flutter project root = `src/`): feature modules
+`src/lib/features/{categorization,transactions}`; shared context in `src/lib/core/{auth,household,supabase}`;
+migrations in `src/supabase/migrations`; dev DB one-paste script `src/supabase/setup_dev.sql`.
 Design artifacts: research.md · data-model.md · contracts/ · quickstart.md in the same spec dir.
 <!-- SPECKIT END -->

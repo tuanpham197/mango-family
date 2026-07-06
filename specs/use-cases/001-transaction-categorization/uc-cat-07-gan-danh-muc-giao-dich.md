@@ -3,7 +3,7 @@
 | Thuộc tính | Giá trị |
 |------------|---------|
 | **Mã** | UC-CAT-07 |
-| **Tính năng** | Phân loại giao dịch ([spec.md](../001-transaction-categorization/spec.md)) |
+| **Tính năng** | Phân loại giao dịch ([spec.md](../../001-transaction-categorization/spec.md)) |
 | **User Story** | US1 (P1) — giá trị cốt lõi (MVP) |
 | **Tác nhân chính** | Người dùng |
 | **Mức độ ưu tiên** | Cao nhất |

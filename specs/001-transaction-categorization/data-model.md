@@ -19,7 +19,7 @@ erDiagram
     USER ||--o{ TRANSACTION : "entered by"
 ```
 
-> `USER` = `auth.users` của Supabase. Cô lập dữ liệu **giữa các hộ** bằng RLS theo membership (FR-018 đã đổi: chia sẻ trong hộ). `TRANSACTION` mô hình phần liên quan phân loại (đầy đủ ở BR-002).
+> `USER` = bảng **`public.users`** ĐỘC LẬP của app (khóa chính riêng; email duy nhất; tên hiển thị) — **không tham chiếu** `auth.users`. Phiên đăng nhập Supabase Auth được nối với `users` qua **email** (hàm `current_user_id()`); credentials do Auth quản lý riêng. Mọi FK người dùng (`household_members.user_id`, `*.created_by`) trỏ về `public.users` — từ migration `0011_users.sql` (feature 002, 2026-07-06; trước đó trỏ thẳng `auth.users`). Cô lập dữ liệu **giữa các hộ** bằng RLS theo membership (FR-018 đã đổi: chia sẻ trong hộ). `TRANSACTION` mô hình phần liên quan phân loại (đầy đủ ở BR-002).
 
 ## HOUSEHOLD (`households`)
 
@@ -124,3 +124,4 @@ Bút toán Thu/Chi dùng chung trong hộ, tham chiếu đúng một danh mục 
 ## History
 
 - 2026-07-06: Thêm `categories.updated_at` + trigger touch (cập nhật lạc quan đa thành viên — R13, task T050). Đồng bộ với `contracts/db-schema.sql` và migration `0010_updated_at.sql`.
+- 2026-07-06 (feature 002): `USER` hiện thực hóa thành bảng `public.users` **độc lập** (khóa chính riêng, không FK sang auth; phiên đăng nhập nối qua email — `current_user_id()`); FK người dùng repoint từ `auth.users` → `public.users`; `created_by` do trigger `set_created_by` tự gán (migration `0011_users.sql`; dev refresh qua `setup_dev.sql`).

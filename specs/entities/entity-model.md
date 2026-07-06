@@ -1,8 +1,10 @@
-# Entity Model — Phân loại giao dịch (Transaction Categorization)
+# Entity Model — Sổ tài chính hộ gia đình (feature 001 + 002)
 
-**Nguồn**: [`specs/001-transaction-categorization/spec.md`](../001-transaction-categorization/spec.md) · [`BR-001`](../business-requirements/BR-001.md) · [`BR-002`](../business-requirements/BR-002.md) (Giao dịch) · [`plan.md`](../001-transaction-categorization/plan.md) · [`data-model.md`](../001-transaction-categorization/data-model.md)
+**Nguồn**: [`BR-001`](../business-requirements/BR-001.md) · [`BR-002`](../business-requirements/BR-002.md) · [spec 001](../001-transaction-categorization/spec.md) · [spec 002](../002-transaction-tracking/spec.md) · [UC-TRK-01…05](../use-cases/002-transaction-tracking/) · [`data-model.md` (001)](../001-transaction-categorization/data-model.md)
 
 > **Cập nhật 2026-06-29 — App dùng chung trong hộ gia đình**: Danh mục/giao dịch/quy tắc thuộc một **hộ** (`household_id`) thay vì người dùng; thêm `HOUSEHOLD` + `HOUSEHOLD_MEMBER`; giao dịch ghi rõ thành viên nhập (`created_by`). Cô lập **giữa các hộ**; chia sẻ **trong hộ** (FR-018 đã đổi). Mọi thành viên quyền ngang nhau.
+>
+> **Cập nhật 2026-07-06 — Feature 002 (Ghi chép thu chi)**: `USER` là **danh bạ độc lập** (nguồn định danh duy nhất, phiên đăng nhập đối chiếu qua email — FR-015/002); thêm `ACCOUNT` (nguồn tiền của hộ — phụ thuộc BR-005, phạm vi 002 dùng tài khoản mặc định); `TRANSACTION` mở rộng vòng đời nhập/sửa/xóa với `account_id` + `updated_at` (chống ghi đè thầm lặng — FR-014/002).
 
 ## Entity Relationship Diagram
 
@@ -12,7 +14,9 @@ erDiagram
     USER ||--o{ HOUSEHOLD_MEMBER : "joins"
     HOUSEHOLD ||--o{ CATEGORY : "owns"
     HOUSEHOLD ||--o{ TRANSACTION : "owns"
+    HOUSEHOLD ||--o{ ACCOUNT : "owns"
     HOUSEHOLD ||--o{ CATEGORIZATION_RULE : "owns"
+    ACCOUNT ||--o{ TRANSACTION : "records"
     CATEGORY ||--o{ CATEGORY : "is parent of"
     CATEGORY ||--o{ TRANSACTION : "classifies"
     CATEGORY ||--o{ CATEGORIZATION_RULE : "maps to"
@@ -44,13 +48,15 @@ Liên kết một người dùng với một hộ; mọi thành viên có quyề
 
 ### USER
 
-Một tài khoản người dùng; thuộc hộ qua HOUSEHOLD_MEMBER và là người nhập giao dịch.
+Danh bạ người dùng **độc lập** của hệ thống — nguồn định danh duy nhất mà thành viên hộ và mọi trường "người tạo/người nhập" tham chiếu tới; thuộc hộ qua HOUSEHOLD_MEMBER.
 
-| Attribute | Description                          | Data Type | Length/Precision | Validation Rules               |
-|-----------|--------------------------------------|-----------|------------------|--------------------------------|
-| id        | Định danh duy nhất của người dùng    | Long      | 19               | Primary Key, Sequence          |
-| name      | Tên hiển thị của người dùng          | String    | 100              | Not Null                       |
-| email     | Email đăng nhập                      | String    | 255              | Not Null, Unique, Format: Email |
+| Attribute    | Description                          | Data Type | Length/Precision | Validation Rules               |
+|--------------|--------------------------------------|-----------|------------------|--------------------------------|
+| id           | Định danh duy nhất của người dùng (độc lập, không phụ thuộc cơ chế xác thực) | Long | 19 | Primary Key, Sequence |
+| email        | Email — danh tính đăng nhập, dùng đối chiếu phiên | String | 255 | Not Null, Unique, Format: Email |
+| display_name | Tên hiển thị (hiện trong sổ chung thay cho mã định danh) | String | 100 | Not Null |
+
+**Constraints:** Bảng độc lập cấu trúc với cơ chế xác thực — mật khẩu/phiên do hệ thống đăng nhập quản lý riêng; phiên đăng nhập đối chiếu với hồ sơ **qua email** (FR-015, FR-016/002). Tài khoản đăng nhập hiện có được backfill hồ sơ tự động; chưa có tên hiển thị thì dùng email. Mỗi người chỉ tự sửa hồ sơ của chính mình; thành viên cùng hộ thấy được tên nhau.
 
 ### CATEGORY
 
@@ -71,9 +77,23 @@ Một nhóm phân loại giao dịch dùng chung trong hộ (mặc định hoặ
 
 **Constraints:** `type` không thể thay đổi sau khi tạo (FR-005). Danh mục con bắt buộc kế thừa `type` của cha và chỉ lồng đúng một cấp — `parent_id` phải trỏ tới một danh mục gốc (FR-010, FR-011). Cảnh báo khi `name` trùng trong cùng `(household_id, type, parent_id)` (FR-017). Danh mục cô lập giữa các hộ (FR-018 đã đổi). Sửa đồng thời bởi nhiều thành viên dùng `updated_at` làm mốc lạc quan — ghi lệch mốc bị từ chối và báo xung đột, không ghi đè thầm lặng (R13).
 
+### ACCOUNT
+
+Một nguồn tiền của hộ (tiền mặt, ngân hàng, ví điện tử, thẻ tín dụng) mà giao dịch được ghi vào — định nghĩa đầy đủ thuộc BR-005; phạm vi feature 002 chỉ cần mỗi giao dịch gắn một tài khoản và số dư phản ánh đúng tổng bút toán.
+
+| Attribute    | Description                                              | Data Type | Length/Precision | Validation Rules                     |
+|--------------|----------------------------------------------------------|-----------|------------------|--------------------------------------|
+| id           | Định danh duy nhất của tài khoản                         | Long      | 19               | Primary Key, Sequence                |
+| household_id | Hộ sở hữu tài khoản (dùng chung trong hộ)                | Long      | 19               | Not Null, Foreign Key (HOUSEHOLD.id) |
+| name         | Tên tài khoản hiển thị cho thành viên (vd "Tiền mặt")    | String    | 100              | Not Null                             |
+| type         | Loại nguồn tiền                                          | String    | 20               | Not Null, Values: CASH, BANK, EWALLET, CREDIT |
+| balance      | Số dư hiện tại của tài khoản                             | Decimal   | 14,2             | Not Null                             |
+
+**Constraints:** `balance` là **giá trị suy ra nhất quán** — luôn phản ánh đúng tổng các giao dịch liên quan sau mỗi thao tác thêm/sửa/xóa (FR-011/002, SC-004/002); không sửa tay ngoài cơ chế giao dịch điều chỉnh (BR-ACC-003 — thuộc BR-005). Mỗi hộ luôn có ít nhất một tài khoản mặc định để ghi giao dịch (Assumptions spec 002); quản lý nhiều tài khoản & chuyển tiền thuộc BR-005.
+
 ### TRANSACTION
 
-Một bút toán Thu hoặc Chi dùng chung trong hộ; tham chiếu đúng một danh mục cùng loại và ghi rõ thành viên đã nhập (mô hình đầy đủ thuộc BR-002).
+Một bút toán Thu hoặc Chi dùng chung trong hộ; tham chiếu đúng một danh mục cùng loại và một tài khoản của hộ; ghi rõ thành viên đã nhập; sửa/xóa được bởi mọi thành viên (ngang quyền).
 
 | Attribute        | Description                                            | Data Type | Length/Precision | Validation Rules                     |
 |------------------|--------------------------------------------------------|-----------|------------------|--------------------------------------|
@@ -83,10 +103,12 @@ Một bút toán Thu hoặc Chi dùng chung trong hộ; tham chiếu đúng mộ
 | amount           | Số tiền của giao dịch                                  | Decimal   | 10,2             | Not Null, Min: 0                     |
 | type             | Loại Thu/Chi của giao dịch, phải trùng loại danh mục   | String    | 10               | Not Null, Values: INCOME, EXPENSE    |
 | category_id      | Danh mục được gán cho giao dịch                        | Long      | 19               | Not Null, Foreign Key (CATEGORY.id)  |
+| account_id       | Tài khoản của hộ mà giao dịch được ghi vào             | Long      | 19               | Not Null, Foreign Key (ACCOUNT.id)   |
 | description      | Mô tả tùy chọn cho giao dịch                           | String    | 255              | Optional                             |
 | transaction_date | Ngày giờ phát sinh giao dịch                           | DateTime  | -                | Not Null                             |
+| updated_at       | Mốc sửa đổi cuối — cập nhật lạc quan giữa các thành viên | DateTime | -                | Not Null                             |
 
-**Constraints:** `type` của giao dịch BẮT BUỘC trùng `type` của danh mục được gán (FR-014, SC-003); danh mục và giao dịch phải cùng `household_id`. `amount` phải lớn hơn 0 (BR-TRK-001). Không thể lưu giao dịch nếu `category_id` rỗng (FR-013, SC-002). Tài khoản & cập nhật số dư thuộc BR-002, không mô hình hóa tại đây.
+**Constraints:** `type` của giao dịch BẮT BUỘC trùng `type` của danh mục được gán (FR-014/001, SC-003/001); danh mục, tài khoản và giao dịch phải cùng `household_id`. `amount` phải lớn hơn 0 (BR-TRK-001). Không thể lưu giao dịch nếu `category_id` rỗng (FR-013/001) hoặc `account_id` rỗng (BR-TRK-006). `transaction_date` mặc định hiện tại, sửa được về quá khứ, **không nhận ngày tương lai** (FR-005/002). Sửa giao dịch qua cùng bộ xác thực như nhập mới; đổi loại buộc chọn lại danh mục cùng loại (FR-009/002). Sửa/xóa đồng thời dùng `updated_at` làm mốc lạc quan — không ghi đè thầm lặng (FR-014/002). Xóa luôn qua bước xác nhận (FR-010/002).
 
 ### CATEGORIZATION_RULE
 
@@ -105,3 +127,5 @@ Một bút toán Thu hoặc Chi dùng chung trong hộ; tham chiếu đúng mộ
 ## History
 
 - 2026-07-06: Thêm `CATEGORY.updated_at` (mốc cập nhật lạc quan đa thành viên — R13/T050); đồng bộ với `data-model.md` và `contracts/db-schema.sql`.
+- 2026-07-06 (feature 002): `USER` được hiện thực hóa thành bảng người dùng **độc lập** của app (định danh riêng; email duy nhất; tên hiển thị; phiên đăng nhập nối qua email — credentials do hệ thống xác thực quản lý riêng); mọi FK người dùng (thành viên hộ, người tạo) tham chiếu bảng này (migration `0011_users.sql`).
+- 2026-07-06 (feature 002 — entity model từ UC-TRK-01…05 + BR-002): tổng quát hóa tiêu đề (001+002); cập nhật bảng thuộc tính `USER` (email unique, `display_name`, constraints độc lập/đối chiếu qua email); thêm thực thể **`ACCOUNT`** (nguồn tiền của hộ — BR-005, phạm vi 002 dùng tài khoản mặc định, `balance` là giá trị suy ra); `TRANSACTION` thêm `account_id` + `updated_at` và constraints vòng đời nhập/sửa/xóa (ngày không tương lai, xác nhận khi xóa, chống ghi đè thầm lặng — FR-005/009/010/014 của spec 002).

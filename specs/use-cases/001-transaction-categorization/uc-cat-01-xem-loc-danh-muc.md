@@ -3,7 +3,7 @@
 | Thuộc tính | Giá trị |
 |------------|---------|
 | **Mã** | UC-CAT-01 |
-| **Tính năng** | Phân loại giao dịch ([spec.md](../001-transaction-categorization/spec.md)) |
+| **Tính năng** | Phân loại giao dịch ([spec.md](../../001-transaction-categorization/spec.md)) |
 | **User Story** | US1 (P1) |
 | **Tác nhân chính** | Người dùng |
 | **Mức độ ưu tiên** | Cao |

@@ -8,7 +8,7 @@
 **Goal:** Tạo một danh mục Thu/Chi mới phù hợp với thói quen chi tiêu/thu nhập của người dùng để tăng tỷ lệ phân loại đúng khi nhập giao dịch.
 **Status:** Draft
 
-> **Tính năng:** Phân loại giao dịch ([spec.md](../001-transaction-categorization/spec.md)) · **User Story:** US2 (P2) · **Sơ đồ:** [use-cases.puml](../diagrams/use-cases.puml)
+> **Tính năng:** Phân loại giao dịch ([spec.md](../../001-transaction-categorization/spec.md)) · **User Story:** US2 (P2) · **Sơ đồ:** [use-cases.puml](../../diagrams/use-cases.puml)
 
 ## Preconditions
 
@@ -96,7 +96,7 @@ Danh mục thuộc về riêng từng người dùng; không chia sẻ hay đồ
 
 ## Acceptance Criteria
 
-Truy vết tới Acceptance Scenarios của US2 trong [spec.md](../001-transaction-categorization/spec.md).
+Truy vết tới Acceptance Scenarios của US2 trong [spec.md](../../001-transaction-categorization/spec.md).
 
 - **AC1 (US2 #1) — Tạo và dùng được danh mục mới**: *Given* người dùng ở màn hình quản lý danh mục, *When* thêm danh mục mới, chọn loại Chi và đặt tên "Thú cưng", *Then* danh mục "Thú cưng" xuất hiện trong nhóm Chi và có thể được chọn khi nhập giao dịch Chi.
 - **AC2 — Loại là bắt buộc**: *Given* người dùng chưa chọn loại Thu/Chi, *When* bấm Lưu, *Then* hệ thống chặn lưu và yêu cầu chọn loại. *(A2, FR-004)*

@@ -3,7 +3,7 @@
 | Thuộc tính | Giá trị |
 |------------|---------|
 | **Mã** | UC-CAT-06 |
-| **Tính năng** | Phân loại giao dịch ([spec.md](../001-transaction-categorization/spec.md)) |
+| **Tính năng** | Phân loại giao dịch ([spec.md](../../001-transaction-categorization/spec.md)) |
 | **User Story** | — (Edge case, chốt tại Clarifications 2026-06-24) |
 | **Tác nhân chính** | Người dùng |
 | **Mức độ ưu tiên** | Thấp |

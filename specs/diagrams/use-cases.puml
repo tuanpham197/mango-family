@@ -1,6 +1,7 @@
-@startuml Use Cases — Phân loại giao dịch (sổ chung hộ gia đình)
-' Nguồn: specs/use-cases/*.md · spec.md · plan.md
-' Cập nhật 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
+@startuml Use Cases — Sổ tài chính hộ gia đình (feature 001 + 002)
+' Nguồn: specs/use-cases/<feature>/*.md · specs/001-*/spec.md · specs/002-*/spec.md
+' 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
+' 2026-07-06: thêm feature 002 (UC-TRK-01..05); người dùng là danh sách độc lập (FR-015/002).
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -8,7 +9,15 @@ skinparam actorStyle awesome
 
 actor "Thành viên hộ gia đình\n(quyền ngang nhau)" as member
 
-rectangle "Phân loại giao dịch (Transaction Categorization) — dữ liệu dùng chung trong hộ" {
+rectangle "Feature 002 — Ghi chép thu nhập & chi phí" {
+    usecase "UC-TRK-01\nĐăng nhập & định danh người dùng\n(nền tảng — làm ĐẦU TIÊN)" as TRK01
+    usecase "UC-TRK-02\nNhập giao dịch thu/chi" as TRK02
+    usecase "UC-TRK-03\nXem sổ giao dịch chung" as TRK03
+    usecase "UC-TRK-04\nChỉnh sửa giao dịch" as TRK04
+    usecase "UC-TRK-05\nXóa giao dịch (có xác nhận)" as TRK05
+}
+
+rectangle "Feature 001 — Phân loại giao dịch (✅ implemented)" {
 
     package "Quản lý danh mục" {
         usecase "UC-CAT-01\nXem & lọc danh mục theo Thu/Chi" as UC01
@@ -19,7 +28,7 @@ rectangle "Phân loại giao dịch (Transaction Categorization) — dữ liệu
         usecase "UC-CAT-06\nẨn / bỏ ẩn danh mục" as UC06
     }
 
-    package "Phân loại khi nhập giao dịch (luồng BR-002)" {
+    package "Phân loại khi nhập giao dịch" {
         usecase "UC-CAT-07\nGán danh mục cho giao dịch" as UC07
         usecase "UC-CAT-08\nGợi ý danh mục" as UC08
     }
@@ -31,6 +40,11 @@ rectangle "Tiền đề: Quản lý hộ gia đình (feature riêng — BR đề
     usecase "UC-HH-03\nTham gia hộ" as HH03
 }
 
+member --> TRK01
+member --> TRK02
+member --> TRK03
+member --> TRK04
+member --> TRK05
 member --> UC01
 member --> UC02
 member --> UC03
@@ -43,33 +57,49 @@ member --> HH01
 member --> HH02
 member --> HH03
 
-' Quan hệ giữa các use case (không đổi)
+' Quan hệ giữa các use case
 UC03 ..> UC02 : «extend»
 UC07 ..> UC01 : «include»
 UC08 ..> UC07 : «extend»
+TRK02 ..> UC07 : «include»
+TRK04 ..> TRK03 : «extend»
+TRK05 ..> TRK03 : «extend»
+TRK04 ..> UC07 : «include»\n(khi đổi loại)
+
+note bottom of TRK01
+  Nguồn định danh duy nhất (danh sách người dùng
+  độc lập — FR-015/002): thành viên hộ & "người tạo"
+  đều tham chiếu về đây. Tiền đề của MỌI use case.
+end note
+
+note bottom of TRK02
+  Số tiền > 0; loại Thu/Chi; danh mục cùng loại
+  (bắt buộc); mô tả ≤ 255; ngày mặc định hiện tại
+  (không nhận tương lai); số dư tài khoản cập nhật
+  đúng sau thêm/sửa/xóa (BR-TRK-001..010).
+end note
 
 note bottom of UC05
   Khi danh mục còn giao dịch: bắt buộc
   gán lại (cùng loại) hoặc xóa giao dịch
-  trước khi hoàn tất xóa (FR-008, FR-009).
+  trước khi hoàn tất xóa (FR-008, FR-009 /001).
 end note
 
 note bottom of UC07
   Chỉ hiển thị danh mục cùng loại Thu/Chi;
-  chặn lưu nếu chưa chọn (FR-013, FR-014).
-  Giao dịch ghi rõ thành viên đã nhập (created_by).
+  chặn lưu nếu chưa chọn (FR-013, FR-014 /001).
 end note
 
 note as N1
-  Danh mục + giao dịch DÙNG CHUNG trong hộ; cô lập
-  giữa các hộ (RLS theo membership). Mọi thành viên
-  quyền NGANG NHAU — không có vai trò quản trị.
+  Dữ liệu DÙNG CHUNG trong hộ; cô lập giữa các hộ
+  (RLS theo membership). Mọi thành viên quyền
+  NGANG NHAU; sổ hiển thị TÊN người nhập.
 end note
 N1 .. member
 
 note as N2
-  UC-HH-* thuộc feature "Quản lý hộ" (tiền đề); FR
-  định nghĩa ở feature đó, không thuộc FR-001..020.
+  UC-HH-* thuộc feature "Quản lý hộ" (tiền đề);
+  BR riêng, chưa được viết.
 end note
 N2 .. HH01
 
