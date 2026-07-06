@@ -1,0 +1,76 @@
+@startuml Use Cases — Phân loại giao dịch (sổ chung hộ gia đình)
+' Nguồn: specs/use-cases/*.md · spec.md · plan.md
+' Cập nhật 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Thành viên hộ gia đình\n(quyền ngang nhau)" as member
+
+rectangle "Phân loại giao dịch (Transaction Categorization) — dữ liệu dùng chung trong hộ" {
+
+    package "Quản lý danh mục" {
+        usecase "UC-CAT-01\nXem & lọc danh mục theo Thu/Chi" as UC01
+        usecase "UC-CAT-02\nTạo danh mục mới" as UC02
+        usecase "UC-CAT-03\nTạo danh mục con (một cấp)" as UC03
+        usecase "UC-CAT-04\nChỉnh sửa tên & biểu tượng" as UC04
+        usecase "UC-CAT-05\nXóa danh mục (gán lại / xóa GD)" as UC05
+        usecase "UC-CAT-06\nẨn / bỏ ẩn danh mục" as UC06
+    }
+
+    package "Phân loại khi nhập giao dịch (luồng BR-002)" {
+        usecase "UC-CAT-07\nGán danh mục cho giao dịch" as UC07
+        usecase "UC-CAT-08\nGợi ý danh mục" as UC08
+    }
+}
+
+rectangle "Tiền đề: Quản lý hộ gia đình (feature riêng — BR đề xuất)" #EEEEEE {
+    usecase "UC-HH-01\nTạo hộ gia đình" as HH01
+    usecase "UC-HH-02\nMời thành viên" as HH02
+    usecase "UC-HH-03\nTham gia hộ" as HH03
+}
+
+member --> UC01
+member --> UC02
+member --> UC03
+member --> UC04
+member --> UC05
+member --> UC06
+member --> UC07
+member --> UC08
+member --> HH01
+member --> HH02
+member --> HH03
+
+' Quan hệ giữa các use case (không đổi)
+UC03 ..> UC02 : «extend»
+UC07 ..> UC01 : «include»
+UC08 ..> UC07 : «extend»
+
+note bottom of UC05
+  Khi danh mục còn giao dịch: bắt buộc
+  gán lại (cùng loại) hoặc xóa giao dịch
+  trước khi hoàn tất xóa (FR-008, FR-009).
+end note
+
+note bottom of UC07
+  Chỉ hiển thị danh mục cùng loại Thu/Chi;
+  chặn lưu nếu chưa chọn (FR-013, FR-014).
+  Giao dịch ghi rõ thành viên đã nhập (created_by).
+end note
+
+note as N1
+  Danh mục + giao dịch DÙNG CHUNG trong hộ; cô lập
+  giữa các hộ (RLS theo membership). Mọi thành viên
+  quyền NGANG NHAU — không có vai trò quản trị.
+end note
+N1 .. member
+
+note as N2
+  UC-HH-* thuộc feature "Quản lý hộ" (tiền đề); FR
+  định nghĩa ở feature đó, không thuộc FR-001..020.
+end note
+N2 .. HH01
+
+@enduml

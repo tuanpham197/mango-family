@@ -17,6 +17,12 @@
 - Q: Người dùng được làm gì với danh mục mặc định? → A: Sửa, ẩn và xóa như danh mục tự tạo (kèm cơ chế gán lại khi còn giao dịch).
 - Q: Cơ chế gợi ý danh mục (BR-CAT-007) dựa trên gì? → A: Kết hợp khớp từ khóa theo quy tắc trên mô tả VÀ lịch sử phân loại của người dùng (không dùng AI/ML; luôn ghi đè được).
 
+### Session 2026-06-29
+
+- Q: App dành cho một người dùng hay dùng chung? → A: **Dùng chung trong hộ gia đình, nhiều thành viên** — chia sẻ chung CẢ danh mục VÀ giao dịch (sổ chung của hộ); cô lập giữa các hộ khác nhau.
+- Q: Phân quyền giữa các thành viên? → A: **Mọi thành viên quyền ngang nhau** (ai cũng tạo/sửa/xóa danh mục, nhập giao dịch); không có vai trò quản trị. Mỗi giao dịch ghi rõ thành viên đã nhập.
+- *Hệ quả*: đảo ngược FR-018 (vốn per-user); chi tiết kỹ thuật ở [`plan.md`](./plan.md). Quản lý hộ (tạo/mời/tham gia) là tiền đề thuộc feature riêng.
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -126,15 +132,19 @@ Khi người dùng nhập giao dịch, hệ thống gợi ý một danh mục ph
 - **FR-015**: Hệ thống MUST gợi ý danh mục bằng cách KẾT HỢP khớp từ khóa theo quy tắc trên mô tả giao dịch VÀ lịch sử phân loại của chính người dùng (không dùng AI/ML); người dùng MUST be able to chấp nhận hoặc ghi đè gợi ý. *(BR-CAT-007; chốt tại Clarifications 2026-06-24)*
 - **FR-016**: Khi đổi tên hoặc biểu tượng một danh mục, hệ thống MUST phản ánh thay đổi ở mọi nơi danh mục được tham chiếu, bao gồm giao dịch lịch sử và báo cáo. *(suy luận)*
 - **FR-017**: Hệ thống MUST cảnh báo khi tạo hoặc sửa danh mục có tên trùng trong cùng một loại và cùng cấp cha. *(suy luận)*
-- **FR-018**: Danh mục MUST thuộc về từng người dùng riêng; không có chia sẻ hay đồng bộ bộ danh mục giữa nhiều người dùng. *(BR Out of Scope)*
+- **FR-018**: Danh mục, giao dịch và quy tắc gợi ý MUST thuộc về một **hộ gia đình** và được **dùng chung giữa các thành viên trong hộ**; dữ liệu MUST được **cô lập giữa các hộ khác nhau** (không chia sẻ chéo hộ). *(BR-001 cập nhật 2026-06-29 — trước đây per-user)*
 - **FR-019**: Khi nhập giao dịch, người dùng MUST be able to gán giao dịch vào một danh mục cha trực tiếp HOẶC vào một danh mục con của nó; báo cáo MUST gộp (roll-up) giao dịch của danh mục con vào danh mục cha. *(chốt tại Clarifications 2026-06-24)*
 - **FR-020**: Người dùng MUST be able to ẩn bất kỳ danh mục nào (mặc định hoặc tự tạo) khỏi danh sách chọn khi nhập giao dịch mới mà không xóa; danh mục đã ẩn MUST giữ nguyên cho giao dịch lịch sử và báo cáo, và MUST có thể được bỏ ẩn. *(chốt tại Clarifications 2026-06-24)*
+- **FR-021**: Mọi thành viên trong hộ MUST có quyền ngang nhau đối với dữ liệu chung — bất kỳ thành viên nào cũng có thể tạo/sửa/xóa danh mục và nhập/sửa/xóa giao dịch; không có vai trò quản trị. *(BR-001 cập nhật 2026-06-29)*
+- **FR-022**: Mỗi giao dịch MUST ghi nhận thành viên đã nhập (người tạo) để minh bạch trong sổ chung của hộ. *(BR-001 cập nhật 2026-06-29)*
 
 ### Key Entities *(include if feature involves data)*
 
-- **Danh mục (Category)**: Đại diện cho một nhóm phân loại giao dịch. Thuộc tính chính: tên, loại (Thu hoặc Chi — cố định, đúng một loại), biểu tượng (tùy chọn), cờ phân biệt mặc định/tự tạo, cờ ẩn/hiện, chủ sở hữu (người dùng), tham chiếu danh mục cha (rỗng nếu là danh mục gốc). Quan hệ: thuộc về một người dùng; có thể có một danh mục cha; được nhiều giao dịch tham chiếu — cả danh mục cha (kể cả khi đã có danh mục con) lẫn danh mục con đều có thể được giao dịch tham chiếu trực tiếp.
+- **Hộ gia đình (Household)**: Đơn vị sở hữu chung danh mục và giao dịch. Thuộc tính: tên hộ, người tạo. Quan hệ: có nhiều thành viên; sở hữu nhiều danh mục, giao dịch và quy tắc gợi ý.
+- **Thành viên hộ (Household Member)**: Liên kết một người dùng với một hộ; mọi thành viên quyền ngang nhau (không vai trò quản trị). MVP: mỗi người dùng thuộc một hộ.
+- **Danh mục (Category)**: Đại diện cho một nhóm phân loại giao dịch, **dùng chung trong hộ**. Thuộc tính chính: tên, loại (Thu hoặc Chi — cố định, đúng một loại), biểu tượng (tùy chọn), cờ phân biệt mặc định/tự tạo, cờ ẩn/hiện, **hộ sở hữu (household)**, người tạo (audit), tham chiếu danh mục cha (rỗng nếu là danh mục gốc). Quan hệ: **thuộc về một hộ** (dùng chung giữa các thành viên); có thể có một danh mục cha; được nhiều giao dịch tham chiếu — cả danh mục cha (kể cả khi đã có danh mục con) lẫn danh mục con đều có thể được giao dịch tham chiếu trực tiếp.
 - **Danh mục con (Subcategory)**: Một Danh mục có tham chiếu tới một danh mục cha (chỉ một cấp). Kế thừa loại Thu/Chi của cha.
-- **Giao dịch (Transaction)** *(định nghĩa ở BR-002, tham chiếu tại đây)*: Mỗi giao dịch tham chiếu đúng một danh mục; loại Thu/Chi của giao dịch phải trùng loại của danh mục được gán.
+- **Giao dịch (Transaction)** *(định nghĩa ở BR-002, tham chiếu tại đây)*: **Dùng chung trong hộ**; mỗi giao dịch tham chiếu đúng một danh mục (cùng hộ); loại Thu/Chi của giao dịch phải trùng loại của danh mục được gán; ghi nhận **thành viên đã nhập** (người tạo).
 - **Gợi ý danh mục (Category Suggestion)**: Liên kết suy ra từ mô tả giao dịch (theo từ khóa/quy tắc) và/hoặc lịch sử phân loại của người dùng tới một danh mục được đề xuất. Mang tính tham khảo, luôn có thể ghi đè.
 
 ## Success Criteria *(mandatory)*
@@ -152,7 +162,7 @@ Khi người dùng nhập giao dịch, hệ thống gợi ý một danh mục ph
 
 ## Assumptions
 
-- **Danh mục theo từng người dùng**: Danh mục là dữ liệu cá nhân của mỗi người dùng; không chia sẻ hay đồng bộ giữa nhiều người dùng (theo Out of Scope của BR-001).
+- **Danh mục dùng chung trong hộ** *(cập nhật 2026-06-29)*: Danh mục và giao dịch là dữ liệu chung của một hộ gia đình, chia sẻ giữa các thành viên; cô lập giữa các hộ khác nhau. Mọi thành viên quyền ngang nhau. Quản lý hộ (tạo/mời/tham gia) là tiền đề thuộc feature riêng. *(Trước đây giả định dữ liệu theo từng người dùng — đã thay đổi.)*
 - **Danh mục con một cấp**: Chỉ hỗ trợ một cấp danh mục con (cha → con). Nhiều hơn một cấp nằm ngoài phạm vi (theo BR-001).
 - **Loại Thu/Chi cố định sau khi tạo** *(đã chốt — xem Clarifications 2026-06-24)*: Loại của một danh mục không đổi sau khi tạo để giữ báo cáo và ngân sách nhất quán; muốn chuyển loại thì tạo danh mục mới và gán lại giao dịch.
 - **Danh mục mặc định ứng xử như danh mục tự tạo** *(đã chốt — xem Clarifications 2026-06-24)*: Người dùng có thể sửa tên/biểu tượng, ẩn và xóa danh mục mặc định, với cùng cơ chế gán lại khi danh mục còn giao dịch.
