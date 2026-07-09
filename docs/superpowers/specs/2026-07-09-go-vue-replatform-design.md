@@ -52,15 +52,17 @@ src/
 ## §2. Auth & phân quyền (thay Supabase Auth + RLS)
 
 - `users` thêm `password_hash` (bcrypt). Bảng users là nguồn định danh **kiêm** đăng nhập trực tiếp — cơ chế "đối chiếu qua email" cũ (workaround cho Supabase Auth) bị loại bỏ.
-- Đăng nhập email + mật khẩu → JWT (tokenprovider) trong cookie HttpOnly, SameSite=Lax; middleware `authenticate` nạp user vào context.
+- Đăng nhập email + mật khẩu → JWT (tokenprovider) trong cookie HttpOnly, SameSite=Lax; middleware `authenticate` nạp user vào context. JWT hạn 7 ngày, hết hạn thì đăng nhập lại (MVP — không refresh token); **đăng xuất** = xóa cookie (trong phạm vi, US5 đã nhắc). Dev: Vite dev server proxy `/api` + `/ws` sang Go để cookie chạy same-origin, không cần mở CORS.
 - Phân quyền theo hộ: middleware/biz buộc mọi truy vấn filter theo `household_id` mà user là thành viên — **một tầng duy nhất thay RLS**; resource ngoài hộ trả 404.
 - FR-014 (không ghi đè thầm lặng): optimistic locking bằng `updated_at` (`UPDATE ... WHERE id = ? AND updated_at = ?`); 0 hàng → phân biệt ConcurrencyConflict (bản ghi đã đổi) vs RecordGone (đã xóa).
-- Seed dev: alice/bob/carol (hộ A/B) như quickstart cũ.
+- Seed dev: alice/bob/carol (hộ A/B) như quickstart cũ — bằng **seed script dev-only** (lệnh riêng, ví dụ `go run ./cmd/seed` hoặc SQL script), KHÔNG nằm trong `db/migrations/`.
 - Ngoài phạm vi (giữ nguyên như spec): tự đăng ký, quên mật khẩu, đổi email, xóa tài khoản.
 
 ## §3. Realtime (SC-006 ≤ 5s)
 
 Mutation thành công → publish event lên **pubsub local** (mẫu learn_go) → subscriber broadcast qua **WebSocket hub theo household**: `{type: "transactions_changed" | "categories_changed" | "accounts_changed"}` → front-end refetch dữ liệu đang xem. Cùng ngữ nghĩa "invalidation" như Supabase Realtime cũ nên use case/quickstart không đổi nghiệp vụ. Fallback: refetch khi tab focus/visibility.
+
+**Prod topology**: Go server phục vụ luôn `web/dist` đã build (một origin duy nhất → cookie HttpOnly + WS hoạt động không cần CORS); Vite proxy chỉ là chuyện dev. Nếu sau này tách hosting, đặt reverse proxy giữ same-origin.
 
 ## §4. Bản đồ cập nhật tài liệu
 
@@ -71,10 +73,12 @@ Spec/BR/use case về cơ bản **giữ nguyên** (tech-agnostic) — chỉ tầ
 | Gốc | `CLAUDE.md` | Stack mới, layout `src/api·web·db`, bỏ mô tả Supabase/email-mapping, 001 → "re-implementation pending" |
 | BR | `BR-001` (nhắc Supabase) | Trung lập hóa tham chiếu + History line; `BR-002` không đổi |
 | 001 | `plan/research/data-model/contracts/quickstart` | Viết lại cho Go+Vue; `contracts/` → REST API contract; `tasks.md` tái sinh, reset |
-| 002 | `plan/research/data-model/contracts/quickstart` | Viết lại; `contracts/` → REST API + WS events; quickstart giữ 23 kịch bản nghiệp vụ, đổi Setup (docker compose + go run/air + npm run dev) |
-| 002 | `spec.md` | Chỉ sửa chỗ "đối chiếu qua email" (Key Entities, Assumptions) thành trung lập; History v4 |
-| UC | `uc-trk-01` | Generalize nếu có mô tả email-mapping |
-| Entity | `entity-model.md` | Kiểm tra & sửa nếu dính cơ chế cũ (users độc lập vẫn đúng nguyên ý nghĩa) |
+| 002 | `plan/research/data-model/contracts/quickstart` | Viết lại; `contracts/` → REST API + WS events; quickstart giữ 23 kịch bản nghiệp vụ, đổi Setup (docker compose + go run/air + npm run dev); `tasks.md` tái sinh, reset |
+| 002 | `spec.md` | Sửa Key Entities/Assumptions: chỗ "đối chiếu qua email" VÀ câu "mật khẩu/thông tin xác thực do hệ thống đăng nhập quản lý riêng, không nằm trong thực thể này" (mô tả cơ chế Supabase cũ) — generalize thành trung lập ("thông tin xác thực được quản lý an toàn", không chốt nơi lưu). Cũng generalize 2 tàn dư Supabase-era: dòng 157 Assumptions ("Người dùng hiện có… được bổ sung hồ sơ tự động" — backfill từ auth cũ, hết ý nghĩa) và dòng 111 edge case "(tài khoản tạo trước khi có hồ sơ)". History v4 |
+| UC | `uc-trk-01` | Generalize mô tả email-mapping (dòng 68 có) |
+| UC | `specs/use-cases/README.md` | Bỏ/ghi lại các marker "✅ implemented" của feature 001 (không còn code) |
+| Diagram | `specs/diagrams/use-cases.puml` (+ render lại `use-cases.png`) | Dòng 95 "(RLS theo membership)" → cơ chế trung lập ("dữ liệu chung theo hộ"); render lại PNG theo quy tắc CLAUDE.md |
+| Entity | `entity-model.md` | Sửa các chỗ đã xác định dính cơ chế cũ: dòng 7 & 59 ("phiên đăng nhập đối chiếu qua email"), dòng 130–131 (backfill hồ sơ tự động + đường dẫn migration `0011_users.sql` kiểu Supabase — layout mới là `db/migrations/`); khái niệm users độc lập vẫn giữ nguyên ý nghĩa |
 | Meta | `.specify/feature.json` | Trỏ theo feature đang re-plan (001 trước, rồi 002) |
 | Cuối | Mọi file sửa | Cập nhật khối References/Truy vết + History; chạy `/speckit-analyze` |
 
