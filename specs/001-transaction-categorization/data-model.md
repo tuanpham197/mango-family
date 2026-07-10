@@ -1,8 +1,10 @@
-# Phase 1 — Data Model: Phân Loại Giao Dịch (sổ chung hộ gia đình)
+# Phase 1 — Data Model: Phân Loại Giao Dịch (Go + Vue, PostgreSQL tự quản)
 
-**Date**: 2026-06-29 · **Feature**: 001-transaction-categorization · **Plan**: [plan.md](./plan.md)
+**Date**: 2026-07-10 · **Feature**: 001-transaction-categorization · **Plan**: [plan.md](./plan.md)
 
-Mô hình dữ liệu (Supabase/PostgreSQL) cho app **dùng chung trong hộ gia đình, nhiều thành viên, quyền ngang nhau**. So với [entity-model.md](../entities/entity-model.md): danh mục/giao dịch/quy tắc nay thuộc **hộ** (`household_id`) thay vì người dùng; thêm `households` + `household_members`. (entity-model.md nên được cập nhật tương ứng — xem plan.md.)
+Mô hình dữ liệu PostgreSQL cho sổ chung hộ gia đình (nhiều thành viên, ngang quyền). Khớp
+[entity-model.md](../entities/entity-model.md); khác bản Supabase cũ: `users` kiêm credentials
+(bcrypt), KHÔNG còn RLS (phạm vi hộ ở tầng API — research D5), trigger nghiệp vụ chuyển về biz (D3).
 
 ## Sơ đồ thực thể (phạm vi tính năng)
 
@@ -19,109 +21,95 @@ erDiagram
     USER ||--o{ TRANSACTION : "entered by"
 ```
 
-> `USER` = bảng **`public.users`** ĐỘC LẬP của app (khóa chính riêng; email duy nhất; tên hiển thị) — **không tham chiếu** `auth.users`. Phiên đăng nhập Supabase Auth được nối với `users` qua **email** (hàm `current_user_id()`); credentials do Auth quản lý riêng. Mọi FK người dùng (`household_members.user_id`, `*.created_by`) trỏ về `public.users` — từ migration `0011_users.sql` (feature 002, 2026-07-06; trước đó trỏ thẳng `auth.users`). Cô lập dữ liệu **giữa các hộ** bằng RLS theo membership (FR-018 đã đổi: chia sẻ trong hộ). `TRANSACTION` mô hình phần liên quan phân loại (đầy đủ ở BR-002).
-
-## HOUSEHOLD (`households`)
-
-Một hộ gia đình — đơn vị sở hữu chung danh mục và giao dịch.
+## USER (`users`) — kiêm đăng nhập
 
 | Field | Type (Postgres) | Validation / Ràng buộc | Nguồn |
 |-------|-----------------|------------------------|-------|
-| id | uuid (PK, default gen_random_uuid) | Primary Key | R10 |
-| name | text | Not Null | R10 |
-| created_by | uuid (FK → auth.users) | Not Null (người tạo hộ) | R10 |
+| id | uuid (PK, default gen_random_uuid()) | Primary Key | FR-015/002 |
+| email | citext/text | Not Null, **Unique**, format email (validate ở biz) | FR-016/002 |
+| display_name | text | Not Null (fallback = email khi hiển thị) | UC-TRK-01 5a |
+| password_hash | text | Not Null (bcrypt — không bao giờ trả về qua API) | D4 |
+| created_at | timestamptz | Not Null, default now() | — |
+
+## HOUSEHOLD (`households`)
+
+| Field | Type | Ràng buộc | Nguồn |
+|-------|------|-----------|-------|
+| id | uuid (PK) | Primary Key | — |
+| name | text | Not Null | — |
+| created_by | uuid (FK → users.id) | Not Null | — |
 | created_at | timestamptz | Not Null, default now() | — |
 
 ## HOUSEHOLD_MEMBER (`household_members`)
 
-Liên kết người dùng ↔ hộ. **Không có vai trò gác quyền** (mọi thành viên ngang quyền — R11).
+| Field | Type | Ràng buộc | Nguồn |
+|-------|------|-----------|-------|
+| household_id | uuid (FK → households.id) | Not Null; PK kép cùng user_id | FR-018 |
+| user_id | uuid (FK → users.id) | Not Null; PK kép cùng household_id | FR-018 |
+| joined_at | timestamptz | Not Null, default now() | — |
 
-| Field | Type (Postgres) | Validation / Ràng buộc | Nguồn |
-|-------|-----------------|------------------------|-------|
-| household_id | uuid (FK → households.id) | Not Null; PK cùng user_id | R10 |
-| user_id | uuid (FK → auth.users) | Not Null; PK cùng household_id | R10 |
-| joined_at | timestamptz | Not Null, default now() | R11 |
-
-**Constraints**: PK kép `(household_id, user_id)` — mỗi người chỉ vào một hộ một lần. MVP giả định mỗi user thuộc một hộ.
+**Constraints**: PK kép `(household_id, user_id)`. Không cột vai trò — ngang quyền (FR-021). MVP: mỗi user một hộ.
 
 ## CATEGORY (`categories`)
 
-Nhóm phân loại Thu/Chi dùng chung trong hộ, mặc định hoặc tự tạo, lồng một cấp.
-
-| Field | Type (Postgres) | Validation / Ràng buộc | Nguồn |
-|-------|-----------------|------------------------|-------|
+| Field | Type | Ràng buộc | Nguồn |
+|-------|------|-----------|-------|
 | id | uuid (PK) | Primary Key | — |
-| household_id | uuid (FK → households.id) | Not Null; RLS theo membership | FR-018(đã đổi), R10 |
-| name | text | Not Null; cảnh báo trùng trong (household_id, type, parent_id) | FR-003, FR-017 |
-| type | text | Not Null; ∈ {`INCOME`,`EXPENSE`}; **bất biến sau insert** | FR-004, FR-005 |
+| household_id | uuid (FK → households.id) | Not Null; index | FR-018 |
+| name | text | Not Null; cảnh báo trùng trong (household_id, type, parent_id) — biz | FR-003, FR-017 |
+| type | text | Not Null; CHECK ∈ {`INCOME`,`EXPENSE`}; **bất biến sau insert — biz** | FR-004, FR-005 |
 | icon | text | Optional | FR-003 |
-| parent_id | uuid (FK → categories.id) | Optional; chỉ trỏ tới danh mục cấp gốc (một cấp) | FR-010 |
+| parent_id | uuid (FK → categories.id) | Optional; **chỉ trỏ danh mục gốc (1 cấp) — biz** | FR-010 |
 | is_default | boolean | Not Null, default false | FR-001, FR-007 |
 | is_hidden | boolean | Not Null, default false | FR-020 |
-| created_by | uuid (FK → auth.users) | Optional (audit: ai tạo) | R14 |
+| created_by | uuid (FK → users.id) | Optional (audit) | FR-022 |
 | created_at | timestamptz | Not Null, default now() | — |
-| updated_at | timestamptz | Not Null, default now(); trigger touch mỗi lần UPDATE — mốc cập nhật lạc quan | R13 |
+| updated_at | timestamptz | Not Null; mốc lạc quan — biz/GORM hook cập nhật | D6 |
 
-**Constraints**
-- `chk_type`: `type IN ('INCOME','EXPENSE')`.
-- `chk_one_level` + `trg_inherit_type`: con chỉ dưới danh mục gốc; con kế thừa `type` của cha — FR-010, FR-011, SC-008.
-- `trg_type_immutable`: chặn đổi `type` — FR-005.
-- Cảnh báo (không cứng) trùng `name` trong `(household_id, type, parent_id)` — FR-017.
+**State (`is_hidden`)**: `visible ⇄ hidden` (UC-CAT-06); ẩn không hiện khi chọn cho giao dịch mới, giữ nguyên lịch sử/báo cáo.
 
-**State (is_hidden)**: `visible ⇄ hidden`, đảo ngược (UC-CAT-06); ẩn không hiện khi nhập giao dịch mới nhưng giữ lịch sử/báo cáo của cả hộ.
+## TRANSACTION (`transactions`) — phần liên quan phân loại (001 tối thiểu)
 
-## TRANSACTION (`transactions`) — phần liên quan phân loại
-
-Bút toán Thu/Chi dùng chung trong hộ, tham chiếu đúng một danh mục cùng loại, ghi rõ thành viên nhập.
-
-| Field | Type (Postgres) | Validation / Ràng buộc | Nguồn |
-|-------|-----------------|------------------------|-------|
+| Field | Type | Ràng buộc | Nguồn |
+|-------|------|-----------|-------|
 | id | uuid (PK) | Primary Key | — |
-| household_id | uuid (FK → households.id) | Not Null; RLS theo membership | R10 |
-| created_by | uuid (FK → auth.users) | **Not Null** (thành viên đã nhập) | R14 |
-| amount | numeric(14,2) | Not Null; `> 0` | BR-TRK-001 |
-| type | text | Not Null; ∈ {`INCOME`,`EXPENSE`} | BR-TRK-002 |
-| category_id | uuid (FK → categories.id) | **Not Null** | FR-013, BR-TRK-003 |
-| description | text | Optional, ≤ 255 ký tự | BR-TRK-004 |
+| household_id | uuid (FK → households.id) | Not Null; index | FR-018 |
+| created_by | uuid (FK → users.id) | **Not Null** — biz gán từ phiên đăng nhập | FR-022 |
+| amount | numeric(14,2) | Not Null; CHECK `> 0` | BR-TRK-001 |
+| type | text | Not Null; CHECK ∈ {`INCOME`,`EXPENSE`}; **= type danh mục — biz** | BR-TRK-002, FR-014 |
+| category_id | uuid (FK → categories.id) | **Not Null** — không giao dịch mồ côi | FR-013, SC-002 |
+| description | text | Optional; ≤ 255 — biz | BR-TRK-004 |
 | transaction_date | timestamptz | Not Null, default now() | BR-TRK-005 |
 
-**Constraints**
-- `chk_amount_positive`: `amount > 0`.
-- `trg_type_match`: `transactions.type` = `categories.type` của `category_id` — FR-014, SC-003.
-- `chk_same_household`: `category_id` phải thuộc cùng `household_id` (danh mục và giao dịch cùng hộ).
-- `category_id` NOT NULL ⇒ không giao dịch mồ côi — FR-013, SC-002.
-- Xóa danh mục qua RPC gán-lại/xóa (không cascade ngầm) — FR-008, SC-007.
+> Feature 002 sẽ mở rộng: `account_id`, `updated_at`, chặn ngày tương lai, vòng đời sửa/xóa.
 
 ## CATEGORIZATION_RULE (`categorization_rules`)
 
-Ánh xạ từ khóa → danh mục để gợi ý, **dùng chung & học từ lịch sử chung của hộ**; tham khảo, ghi đè được.
-
-| Field | Type (Postgres) | Validation / Ràng buộc | Nguồn |
-|-------|-----------------|------------------------|-------|
+| Field | Type | Ràng buộc | Nguồn |
+|-------|------|-----------|-------|
 | id | uuid (PK) | Primary Key | — |
-| household_id | uuid (FK → households.id) | Not Null; RLS theo membership | R10, FR-015 |
-| keyword | text | Not Null | FR-015 |
+| household_id | uuid (FK → households.id) | Not Null | FR-015, FR-018 |
+| keyword | text | Not Null (chuẩn hóa lowercase — biz) | FR-015 |
 | category_id | uuid (FK → categories.id) | Not Null | FR-015 |
-| match_count | integer | Not Null, default 0, `>= 0` | FR-015 |
+| match_count | integer | Not Null, default 0, CHECK ≥ 0 | FR-015 |
 | created_at | timestamptz | Not Null, default now() | — |
 
-**Constraints**: gợi ý cùng `type` với giao dịch đang nhập; không ép buộc (người dùng ghi đè được) — FR-015.
+**Constraints**: unique `(household_id, keyword, category_id)` để upsert học lịch sử (D7); gợi ý luôn cùng loại với giao dịch đang nhập — biz.
 
-## Quy tắc toàn vẹn xuyên thực thể (tóm tắt → truy vết)
+## Bất biến xuyên thực thể → nơi thực thi
 
 | Bất biến | Thực thi | Truy vết |
 |----------|----------|----------|
-| Mỗi giao dịch có đúng một danh mục cùng loại | `category_id NOT NULL` + `trg_type_match` | FR-013, FR-014, SC-002, SC-003 |
-| Loại danh mục cố định sau khi tạo | `trg_type_immutable` | FR-005 |
-| Danh mục con kế thừa loại của cha, một cấp | `trg_inherit_type` + `chk_one_level` | FR-010, FR-011, SC-008 |
-| Xóa không để lại giao dịch mồ côi | RPC `delete_category` | FR-008, FR-009, FR-012, SC-007 |
-| **Dữ liệu dùng chung trong hộ, cô lập giữa các hộ** | **RLS theo membership** `is_member(household_id)` | FR-018 (đã đổi), R10, R12 |
-| Đổi tên/biểu tượng phản ánh mọi nơi | Giao dịch tham chiếu `category_id` | FR-016 |
-| Ghi rõ thành viên nhập giao dịch | `transactions.created_by` | R14 |
-| Mọi thành viên ngang quyền | Không cột role gác quyền; RLS chỉ kiểm membership | R11 |
-| Không ghi đè thầm lặng khi hai thành viên sửa cùng danh mục | `categories.updated_at` + client ghi có điều kiện (0 hàng khớp → báo xung đột) | R13 |
+| Giao dịch có đúng một danh mục cùng loại, cùng hộ | biz (validate trong tx) + `category_id NOT NULL` | FR-013/014, SC-002/003 |
+| Loại danh mục cố định sau tạo | biz (từ chối đổi `type` khi update) | FR-005 |
+| Con một cấp, kế thừa loại cha | biz (kiểm `parent_id` là gốc; gán type = type cha) | FR-010/011, SC-008 |
+| Xóa không để giao dịch mồ côi | biz delete-reassign trong MỘT DB transaction (D12) | FR-008/009/012, SC-007 |
+| Chia sẻ trong hộ, cô lập giữa hộ | middleware household scope + mọi query filter `household_id` (D5) | FR-018 |
+| Ngang quyền | không cột role; chỉ kiểm membership | FR-021 |
+| Không ghi đè thầm lặng | `updated_at` + conditional UPDATE/DELETE (D6) | quickstart #16 |
+| Đổi tên/icon phản ánh mọi nơi | giao dịch tham chiếu `category_id` (không sao chép tên) | FR-016 |
+| Credentials an toàn | bcrypt trong `password_hash`; không select ra API | D4 |
 
 ## History
 
-- 2026-07-06: Thêm `categories.updated_at` + trigger touch (cập nhật lạc quan đa thành viên — R13, task T050). Đồng bộ với `contracts/db-schema.sql` và migration `0010_updated_at.sql`.
-- 2026-07-06 (feature 002): `USER` hiện thực hóa thành bảng `public.users` **độc lập** (khóa chính riêng, không FK sang auth; phiên đăng nhập nối qua email — `current_user_id()`); FK người dùng repoint từ `auth.users` → `public.users`; `created_by` do trigger `set_created_by` tự gán (migration `0011_users.sql`; dev refresh qua `setup_dev.sql`).
+- 2026-07-10: Viết lại cho stack Go + Vue (re-platform): `users` kiêm credentials; bỏ RLS/trigger — bất biến chuyển về biz layer (research D3/D5/D6); thêm unique cho `categorization_rules` phục vụ upsert. Cấu trúc thực thể & quan hệ giữ nguyên bản 2026-06-29/07-06 (xem git history).

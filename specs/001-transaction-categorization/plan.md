@@ -1,51 +1,55 @@
-# Implementation Plan: Phân Loại Giao Dịch (Transaction Categorization)
+# Implementation Plan: Phân Loại Giao Dịch (Transaction Categorization) — Go + Vue
 
-**Branch**: `001-transaction-categorization` | **Date**: 2026-06-29 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-transaction-categorization` (re-plan thực hiện trên branch `003-budgeting`, 2026-07-10) | **Date**: 2026-07-10 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/001-transaction-categorization/spec.md`
+**Input**: Feature specification from `/specs/001-transaction-categorization/spec.md` · [BR-001](../business-requirements/BR-001.md) · [UC-CAT-01…08](../use-cases/001-transaction-categorization/) · [Entity model](../entities/entity-model.md) · [Re-platform design](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md)
 
-> ⚠️ **LEGACY STACK (2026-07-10)**: Plan này mô tả kiến trúc **Flutter + Supabase đã gỡ bỏ** (re-platform Go + Vue — xem [design](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md)). Nghiệp vụ & bất biến vẫn đúng; phần kỹ thuật chờ viết lại bằng `/speckit-plan`.
-
-**User focus**: `@specs/use-cases/001-transaction-categorization/uc-cat-02-tao-danh-muc.md` (Tạo danh mục mới). Kế hoạch bao phủ toàn bộ tính năng (UC-CAT-01…08).
-
-> ⚠️ **Thay đổi phạm vi (2026-06-29)**: App là **dùng chung trong gia đình, nhiều thành viên**. Điều này **đảo ngược FR-018** của spec ("danh mục riêng từng người dùng, không chia sẻ") và mục **Out of Scope của BR-001** ("chia sẻ/đồng bộ giữa nhiều người dùng"). Plan dưới đây đã cập nhật theo mô hình **sổ chung hộ gia đình** với **quyền ngang nhau**. **Spec cần được cập nhật tương ứng** (xem mục "Tác động tới spec" cuối file) — nên chạy `/speckit-clarify` hoặc `/speckit-specify`.
+> ♻️ **Re-plan (2026-07-10)**: Thay thế hoàn toàn plan Flutter/Supabase cũ (xem git history). Bản Flutter từng implement & verify 53/53 task nhưng code đã gỡ bỏ — đây là kế hoạch **re-implementation** trên stack mới. Spec/BR/use case KHÔNG đổi.
 
 ## Summary
 
-Cho phép **các thành viên trong một hộ gia đình dùng chung một sổ tài chính**: chia sẻ chung cả **hệ thống danh mục Thu/Chi** lẫn **giao dịch**. Mọi thành viên có **quyền ngang nhau** (ai cũng xem/tạo/sửa/xóa danh mục và nhập giao dịch); mỗi giao dịch ghi rõ **thành viên nào đã nhập**. Vẫn giữ các bất biến cốt lõi: mọi giao dịch được gán đúng một danh mục cùng loại; danh mục con một cấp; loại Thu/Chi cố định; xóa danh mục không để lại giao dịch mồ côi; gợi ý theo quy tắc/lịch sử (không AI/ML) dùng lịch sử **chung của hộ**.
+Dựng lại tính năng phân loại giao dịch trên stack mới: **hệ thống danh mục Thu/Chi dùng chung trong hộ**
+(mặc định + tự tạo, danh mục con một cấp, loại bất biến, ẩn/bỏ ẩn, xóa an toàn với gán lại),
+**bắt buộc chọn danh mục cùng loại khi nhập giao dịch** (luồng nhập tối thiểu để kiểm chứng),
+**gợi ý danh mục** rule-based + lịch sử chung của hộ, đồng bộ giữa thành viên qua WebSocket.
 
-**Technical approach**: Flutter (iOS+Android), Clean Architecture + Riverpod; backend **Supabase (PostgreSQL + Auth + RLS)**. Dữ liệu danh mục/giao dịch/quy tắc gắn với **`household_id`** thay vì người dùng. Cô lập dữ liệu chuyển từ "theo người dùng" sang **"theo thành viên của hộ"**: RLS cho phép truy cập nếu `auth.uid()` là thành viên của hộ sở hữu bản ghi. Việc tạo hộ & mời thành viên là **tiền đề** (quản lý hộ — xem Dependency), tính năng này giả định người dùng đã là thành viên của một hộ.
+Vì 001 nay đi TRƯỚC 002 trên stack mới, plan này bao gồm cả **nền tảng định danh tối thiểu**:
+bảng `users` (kiêm đăng nhập — bcrypt) + `households`/`household_members` + login JWT cookie +
+middleware phạm vi hộ (thay RLS cũ). Vòng đời tài khoản & quản lý hộ đầy đủ vẫn ngoài phạm vi (dev seed).
+
+**Technical approach**: Go API (Gin + GORM) theo layout `learn_go` — mỗi aggregate một module
+`model/biz/storage/transport`; bất biến nghiệp vụ thực thi ở tầng `biz` trong DB transaction,
+PostgreSQL giữ CHECK/FK/UNIQUE làm hàng rào cuối; migrations SQL thuần qua **goose**; realtime =
+pubsub local → **WebSocket hub theo household**; front-end Vue 3 (Vite/TS/Pinia) mobile-first.
 
 ## Technical Context
 
-**Language/Version**: Dart 3.x trên Flutter 3.x (stable)
+**Language/Version**: Go 1.22+ (api) · TypeScript 5.x / Node 20+ (web)
 
-**Primary Dependencies**: `flutter`, `supabase_flutter` (Auth + Postgres + Realtime), `flutter_riverpod`, `go_router`, `freezed` + `json_serializable`, `sqflite`/`drift` (cache đọc); test: `flutter_test`, `integration_test`, `mocktail`
+**Primary Dependencies**: API: `gin-gonic/gin`, `gorm.io/gorm` + `gorm.io/driver/postgres`, `pressly/goose/v3`, `gorilla/websocket`, `golang-jwt/jwt/v5`, `golang.org/x/crypto/bcrypt`, `google/uuid` · Web: Vue 3, Vite, Pinia, Vue Router, native `fetch` + WebSocket client
 
-**Storage**: Supabase PostgreSQL; dữ liệu gắn `household_id`; cô lập bằng **Row-Level Security theo membership** (thành viên của hộ). Cân nhắc **Supabase Realtime** để đồng bộ thay đổi danh mục/giao dịch giữa các thiết bị thành viên gần thời gian thực
+**Storage**: PostgreSQL 16 tự quản (docker compose cho dev) — bảng `users` (kiêm credentials), `households`, `household_members`, `categories`, `transactions` (phần phân loại), `categorization_rules`; migrations goose tại `src/db/migrations/`
 
-**Testing**: `flutter_test` (unit + widget), `integration_test` (end-to-end gồm kịch bản đa thành viên & cô lập giữa các hộ), `mocktail`
+**Testing**: Go: `go test` + `testify` (unit tầng biz), integration storage với Postgres thật (docker), `httptest` cho transport · Web: Vitest (unit/component) · E2E: **Playwright** (Chromium, multi-context cho đa thành viên) theo quickstart
 
-**Target Platform**: iOS 13+ và Android 8+ (Flutter mobile)
+**Target Platform**: Web responsive **mobile-first** (Chromium/Firefox/Safari hiện đại); dev-test trên Chromium
 
-**Project Type**: Mobile app (Flutter) + BaaS, **multi-user chia sẻ theo hộ gia đình**
+**Project Type**: Web app monorepo — `src/api` (Go) + `src/web` (Vue) + `src/db` (migrations), multi-user chia sẻ theo hộ gia đình
 
-**Performance Goals**: Chọn danh mục < 10s (SC-006); tạo danh mục ≤ 3 bước & < 30s (SC-005); danh sách mượt ~60fps; thay đổi của một thành viên hiển thị cho thành viên khác trong vài giây (đồng bộ)
+**Performance Goals**: Tạo danh mục ≤ 3 bước & < 30s (SC-005); tìm & chọn danh mục < 10s (SC-006); thay đổi của thành viên khác hiển thị ≤ 5 giây (đồng bộ WS — nhất quán SC-006/002); danh sách danh mục mượt với hàng trăm mục
 
-**Constraints**: Đọc offline cơ bản (dữ liệu tài chính cá nhân/hộ — tham chiếu Nghị định 13/2023/NĐ-CP); một loại tiền tệ; một cấp danh mục con; loại cố định; **không để lại giao dịch mồ côi**; **đồng thời (concurrency)**: nhiều thành viên có thể sửa/xóa cùng danh mục → cần xử lý xung đột (xem research R13)
+**Constraints**: Loại danh mục bất biến sau tạo (FR-005); danh mục con đúng 1 cấp, kế thừa loại (FR-010/011); không giao dịch mồ côi — xóa danh mục phải gán lại/xóa giao dịch trong MỘT transaction (FR-008/009/012, SC-007); giao dịch bắt buộc danh mục cùng loại (FR-013/014); cô lập theo hộ ở tầng API (FR-018); ngang quyền (FR-021); không ghi đè thầm lặng (`updated_at` — R13 cũ); gợi ý không AI/ML (FR-015)
 
-**Scale/Scope**: Mỗi hộ vài thành viên (~2–8); mỗi hộ vài chục danh mục và hàng nghìn giao dịch dùng chung; phạm vi tính năng = 8 use case danh mục (UC-CAT-01…08) trên dữ liệu chung của hộ
+**Scale/Scope**: Mỗi hộ 2–8 thành viên, ≤ vài trăm danh mục, hàng nghìn giao dịch; 8 use case UC-CAT-01…08 + nền tảng định danh tối thiểu
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-`.specify/memory/constitution.md` vẫn là **bản mẫu chưa phê chuẩn** (toàn placeholder). Không có nguyên tắc ràng buộc để kiểm tra cổng.
+`.specify/memory/constitution.md` vẫn là **bản mẫu chưa phê chuẩn** (toàn placeholder) — không có nguyên tắc ràng buộc.
 
-- **Kết luận**: PASS (không có gate ràng buộc). Không có vi phạm cần ghi vào Complexity Tracking.
-- **Khuyến nghị (không chặn)**: chạy `/speckit-constitution` trước `/speckit-tasks`.
-
-**Re-check sau Phase 1**: Vẫn PASS. Mô hình hộ gia đình thêm 2 thực thể (household, membership) nhưng là cấu trúc tiêu chuẩn cho multi-tenant theo hộ, không phát sinh độ phức tạp cần biện minh riêng.
+- **Kết luận**: PASS (không có gate ràng buộc).
+- **Re-check sau Phase 1**: PASS — thiết kế theo mẫu learn_go đã chốt ở design re-platform; mỗi aggregate một module, không phát sinh độ phức tạp cần biện minh.
 
 ## Project Structure
 
@@ -53,59 +57,69 @@ Cho phép **các thành viên trong một hộ gia đình dùng chung một sổ
 
 ```text
 specs/001-transaction-categorization/
-├── plan.md              # This file (/speckit-plan)
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/           # Phase 1 output
-│   ├── db-schema.sql            # households, household_members, categories, transactions, rules + RLS theo membership + seed
-│   └── category-repository.md   # Hợp đồng thao tác danh mục (trong ngữ cảnh hộ hiện tại)
-└── tasks.md             # Phase 2 (/speckit-tasks — KHÔNG tạo ở bước này)
+├── plan.md              # This file
+├── research.md          # Phase 0 — quyết định D1…D12 (stack mới + carry-over nghiệp vụ)
+├── data-model.md        # Phase 1 — bảng/constraint + nơi thực thi bất biến (biz vs DB)
+├── quickstart.md        # Phase 1 — setup Go+Vue + 17 kịch bản kiểm chứng (giữ nguyên nghiệp vụ)
+├── contracts/
+│   ├── db-schema.sql            # Schema tham chiếu (goose-style) — users/households/categories/…
+│   └── category-api.md          # REST API + WS events (thay category-repository.md cũ)
+└── tasks.md             # Phase 2 (/speckit-tasks — tái sinh, KHÔNG tạo ở bước này)
 ```
 
-### Source Code (dưới `src/`)
+### Source Code (monorepo `src/` — theo layout learn_go)
 
 ```text
 src/
-├── pubspec.yaml
-├── analysis_options.yaml
-├── lib/
-│   ├── main.dart
-│   ├── core/
-│   │   ├── supabase/             # client + helper RLS/household context
-│   │   ├── household/            # "hộ hiện tại" (current household provider) — tiền đề chia sẻ
-│   │   ├── router/
-│   │   └── error/
-│   └── features/
-│       └── categorization/
-│           ├── domain/           # entities (Category, CategoryType, CategorizationRule), repositories, usecases
-│           ├── data/             # models (DTO), supabase datasources, repo impl, cache
-│           └── presentation/     # screens (CategoryList, CategoryForm, DeleteReassign), widgets, controllers (Riverpod)
-├── supabase/
-│   └── migrations/               # bản thi hành của contracts/db-schema.sql (gồm households + RLS theo membership)
-├── test/
-│   ├── unit/                     # domain use cases + rule gợi ý (lịch sử chung hộ)
-│   └── widget/                   # form tạo/sửa, lọc theo loại
-└── integration_test/             # end-to-end: đa thành viên thấy chung dữ liệu, cô lập giữa các hộ, authorship
+├── api/
+│   ├── main.go · main_route.go       # entry + đăng ký route các module
+│   ├── .env.example · .air.toml · Dockerfile
+│   ├── common/                       # app_error, app_response, paging, sql_model (base), const
+│   ├── component/
+│   │   ├── appctx/                   # app context: db (GORM), secret, pubsub, ws hub
+│   │   ├── tokenprovider/jwt/        # phát/xác thực JWT (cookie HttpOnly)
+│   │   ├── hasher/                   # bcrypt (KHÔNG dùng md5 như repo mẫu)
+│   │   ├── pubsub/ + subscriber/     # local pubsub → đẩy event sang wshub
+│   │   └── wshub/                    # WebSocket hub theo household
+│   ├── middleware/                   # authenticate (JWT→user), household scope, recover
+│   ├── module/
+│   │   ├── user/                     # model/biz/storage/transport-ginuser: login, logout, me
+│   │   ├── household/                # membership + helper seed danh mục mặc định khi tạo hộ
+│   │   ├── category/                 # CRUD + ẩn + con 1 cấp + delete-reassign + suggest (rules)
+│   │   └── transaction/              # TỐI THIỂU: tạo + list (kiểm chứng gán danh mục — FR-013/014/019/022)
+│   └── cmd/seed/                     # seed dev: Alice/Bob (hộ A), Carol (hộ B) + danh mục mặc định
+├── web/
+│   ├── src/{views,components,stores,composables,api,router}/
+│   │   # views: Login, CategoryManage, CategoryForm, TransactionEntry (tối thiểu), Ledger (tối thiểu)
+│   │   # components: CategoryPicker (lọc theo loại), SuggestionChip, DeleteReassignDialog
+│   └── e2e/                          # Playwright specs (17 kịch bản quickstart)
+├── db/migrations/                    # goose: 00001_users … 00005_categorization_rules
+└── docker-compose.yml                # Postgres 16 dev
 ```
 
-**Structure Decision**: Toàn bộ mã nguồn ứng dụng đặt dưới **`src/`** (project root của Flutter là `src/`); repo root giữ gọn cho `specs/` + tài liệu. Giữ feature-first cho `categorization`. Bổ sung **`src/lib/core/household`** giữ ngữ cảnh "hộ hiện tại" (household_id) mà các repository dùng để gắn/lọc dữ liệu. Lược đồ Postgres + RLS + seed nằm trong `src/supabase/migrations`. Quản lý hộ (tạo hộ, mời/loại thành viên) là **dependency** tách riêng (đề xuất BR/feature mới), tính năng này tiêu thụ "hộ hiện tại".
+**Structure Decision**: Mỗi aggregate một module theo learn_go; `categorization_rules` nằm TRONG
+`module/category` (storage + biz suggest) vì chỉ phục vụ gợi ý danh mục. `module/transaction` ở 001
+chỉ là luồng tối thiểu để kiểm chứng phân loại — 002 sẽ mở rộng thành vòng đời đầy đủ (accounts,
+sửa/xóa, số dư). Seed danh mục mặc định là **logic app** gắn với việc tạo hộ (`module/household`),
+không phải migration — dev gọi qua `cmd/seed`.
 
-## Dependency — Quản lý hộ gia đình (ngoài phạm vi feature này)
+## Dependency & thứ tự nền tảng
 
-Tính năng phân loại giả định người dùng **đã thuộc một hộ**. Cần một feature/BR riêng cho: tạo hộ, mời thành viên (link/mã mời), tham gia, rời/loại thành viên. Vì **quyền ngang nhau**, không có vai trò quản trị — bất kỳ thành viên nào cũng có thể mời (chính sách mời: xem research R11). Đề xuất tạo `BR-00x: Quản lý hộ gia đình` và use case tương ứng.
+1. **Hạ tầng chung**: docker compose Postgres + goose migrations `00001_users` → `00002_households`
+   (+`household_members`) → `00003_categories` → `00004_transactions_min` → `00005_categorization_rules`.
+2. **Định danh tối thiểu (TRƯỚC TIÊN — kế thừa nguyên tắc "users FIRST")**: `module/user` (login
+   email+bcrypt → JWT cookie; GET /api/me) + middleware authenticate + household scope + `cmd/seed`.
+3. **Danh mục**: `module/category` đầy đủ (US1→US3) + WS invalidation.
+4. **Gợi ý**: rules + học từ lịch sử (US4).
+5. **Nhập giao dịch tối thiểu**: `module/transaction` (kiểm chứng FR-013/014/019/022).
+6. **Quản lý hộ** (tạo/mời/tham gia) vẫn là tiền đề ngoài phạm vi — dev seed thay thế.
 
-## Tác động tới spec (cần cập nhật)
+## Tác động tới artifact khác
 
-| Vị trí trong spec | Hiện tại | Cần sửa thành |
-|-------------------|----------|----------------|
-| FR-018 | Danh mục riêng từng người dùng, không chia sẻ | Danh mục **dùng chung trong hộ**; cô lập **giữa các hộ** |
-| Assumptions "Danh mục theo từng người dùng" | Không chia sẻ giữa người dùng | Chia sẻ trong hộ; mỗi người dùng thuộc một hộ |
-| BR-001 Out of Scope "chia sẻ/đồng bộ giữa nhiều người dùng" | Out of Scope | **In Scope** (chia sẻ trong hộ); vẫn Out of Scope: chia sẻ giữa các hộ khác nhau |
-| Key Entities | Danh mục thuộc một người dùng | Danh mục/giao dịch thuộc một **hộ**; giao dịch có **người nhập** |
-| Actor (use case diagram) | Người dùng | **Thành viên hộ gia đình** (quyền ngang nhau) |
-
-→ Khuyến nghị `/speckit-clarify` hoặc `/speckit-specify` để chính thức hóa; sau đó cập nhật `specs/diagrams/use-cases.puml` (đổi nhãn actor) và `specs/entities/entity-model.md` (thêm Household/Membership).
+- `specs/entities/entity-model.md` — cấu trúc thực thể KHÔNG đổi (đã trung lập hóa 2026-07-10); không cần sửa thêm.
+- `specs/use-cases/001-*` + sơ đồ — nghiệp vụ không đổi; README đã ghi trạng thái re-implementation.
+- Feature 002: kế thừa toàn bộ nền tảng (users/auth/household/WS) từ plan này; re-plan 002 sau khi 001 chốt.
+- `CLAUDE.md` — cập nhật con trỏ plan hiện hành (bước agent context của Phase 1).
 
 ## Complexity Tracking
 

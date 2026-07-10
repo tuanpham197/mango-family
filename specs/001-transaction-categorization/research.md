@@ -1,105 +1,84 @@
-# Phase 0 — Research: Phân Loại Giao Dịch
+# Phase 0 — Research: Phân Loại Giao Dịch (Go + Vue re-plan)
 
-**Date**: 2026-06-29 · **Feature**: 001-transaction-categorization · **Plan**: [plan.md](./plan.md)
+**Date**: 2026-07-10 · **Feature**: 001-transaction-categorization · **Plan**: [plan.md](./plan.md)
 
-Giải quyết các điểm chưa chắc chắn về kỹ thuật trước khi thiết kế. Mỗi mục: Quyết định · Lý do · Phương án đã cân nhắc.
+> ♻️ Thay thế bản research Flutter/Supabase 2026-06-29 (R1…R16 — xem git history). Các quyết định
+> NGHIỆP VỤ của bản cũ được giữ nguyên và đánh dấu *(carry-over)*; quyết định STACK lấy từ
+> [design re-platform](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md) (user đã chốt).
 
-## R1. Nền tảng client
+## D1. Backend framework & layout
 
-- **Decision**: Flutter 3.x (Dart 3.x), build iOS + Android từ một codebase.
-- **Rationale**: Người dùng đã chọn; phù hợp app mobile tài chính cá nhân; hệ sinh thái đầy đủ cho form nhập liệu, danh sách phân nhóm, offline cache; khớp "đội Mobile" trong BR-001.
-- **Alternatives considered**: React Native (ngang ngửa, nhưng team thống nhất Flutter); Native iOS (loại — bỏ Android); Web (loại — yêu cầu trải nghiệm mobile).
+- **Decision**: Go 1.22+ · Gin · GORM; layout module-first theo `github.com/tuanpham197/learn_go`: mỗi aggregate một `module/<x>/{model,biz,storage,transport}`; `common/` (app_error, app_response, paging, sql_model); `component/` (appctx, tokenprovider/jwt, hasher, pubsub, wshub); `middleware/`.
+- **Rationale**: User chọn rõ ràng (design §1, quyết định #4/#5); map tự nhiên từ Clean Architecture cũ (biz ↔ usecases, storage ↔ datasources, transport ↔ presentation).
+- **Alternatives**: chi/pgx/SSE (khuyến nghị ban đầu — user không chọn); Echo (tương đương, không chọn).
 
-## R2. Backend / lưu trữ — chọn BaaS nào
+## D2. Migrations
 
-- **Decision**: **Supabase** (PostgreSQL + Supabase Auth + Row-Level Security), truy cập qua `supabase_flutter`.
-- **Rationale**:
-  - Mô hình dữ liệu **quan hệ**: danh mục tự tham chiếu một cấp (`parent_id`), khóa ngoại tới người dùng và giao dịch → Postgres hỗ trợ trực tiếp ràng buộc & toàn vẹn.
-  - **Roll-up (FR-019)**: tổng hợp giao dịch danh mục con vào cha dễ dàng bằng SQL aggregation; với Firestore (NoSQL) phải phi chuẩn hóa thủ công.
-  - **Cô lập dữ liệu theo hộ (cập nhật 2026-06-29)**: ánh xạ sang **RLS policy theo membership** — truy cập được nếu `auth.uid()` là thành viên của hộ sở hữu bản ghi (xem R12). Trước đây là per-user (FR-018) nhưng đã đổi sang mô hình hộ gia đình.
-  - **Ràng buộc loại (FR-014, SC-003)**: kiểm tra "loại giao dịch = loại danh mục" bằng CHECK/trigger phía DB làm hàng rào cuối.
-- **Alternatives considered**:
-  - **Firebase (Firestore)**: offline-first mạnh hơn, phổ biến với Flutter; nhưng NoSQL chống lại mô hình quan hệ + roll-up và ràng buộc khóa ngoại phải tự xử lý ở client → rủi ro toàn vẹn cao hơn. **Có thể đổi sang nếu** yêu cầu offline-write phức tạp được ưu tiên hơn tính toàn vẹn quan hệ.
-  - **Backend tự xây (REST + Postgres)**: linh hoạt nhất nhưng tốn hạ tầng/vận hành, thừa cho MVP cá nhân.
+- **Decision**: **goose** (`pressly/goose/v3`), SQL thuần tại `src/db/migrations/` (`00001_users.sql`…); KHÔNG dùng GORM AutoMigrate. Statement nhiều dòng bọc `-- +goose StatementBegin/StatementEnd`. Chạy qua CLI goose hoặc nhúng embed.FS.
+- **Rationale**: User chốt 2026-07-10; SQL thuần giữ được CHECK/UNIQUE/index mà AutoMigrate không quản nổi.
+- **Alternatives**: golang-migrate (quyết định ban đầu, bị thay); GORM AutoMigrate (mất kiểm soát schema).
 
-## R3. Quản lý trạng thái Flutter
+## D3. Nơi thực thi bất biến nghiệp vụ (thay trigger cũ)
 
-- **Decision**: Riverpod (`flutter_riverpod`) + controllers theo feature.
-- **Rationale**: Testable, không phụ thuộc context, hợp Clean Architecture; dễ mock repository trong unit/widget test (hỗ trợ TDD).
-- **Alternatives considered**: Bloc (nhiều boilerplate hơn cho phạm vi này); setState/Provider thuần (khó test & mở rộng).
+- **Decision**: Bất biến thực thi ở tầng **biz trong DB transaction** (GORM `Transaction`): loại bất biến sau tạo, con 1 cấp kế thừa loại, type giao dịch = type danh mục, delete-reassign nguyên tử. PostgreSQL giữ **hàng rào cuối**: CHECK (`type IN (...)`, `amount > 0`), FK, NOT NULL, UNIQUE.
+- **Rationale**: API là writer duy nhất (khác thời Supabase client-direct); logic ở Go dễ test (biz unit test) và trả lỗi có ngữ nghĩa; trigger phức tạp (inherit type, type-match) khó bảo trì khi không còn bắt buộc.
+- **Alternatives**: giữ nguyên bộ trigger cũ (thừa khi có API trung gian; khó debug); constraint-only (không diễn đạt được quy tắc xuyên bảng).
 
-## R4. Mô hình "danh mục con một cấp" (FR-010, FR-011)
+## D4. Auth & phiên đăng nhập *(nền tảng — thay Supabase Auth)*
 
-- **Decision**: Một bảng `categories` **tự tham chiếu** qua `parent_id` (nullable). Ràng buộc một cấp: `parent_id` chỉ được trỏ tới danh mục có `parent_id IS NULL` (enforce bằng trigger/CHECK + validate ở domain).
-- **Rationale**: Đơn giản, tránh bảng riêng cho subcategory; "danh mục con = danh mục có cha". Kế thừa loại: trigger gán `type` con = `type` cha và chặn lệch loại (FR-011).
-- **Alternatives considered**: Bảng `subcategories` riêng (trùng lặp cấu trúc, khó truy vấn gộp cha+con); cột `depth` (thừa khi chỉ 1 cấp).
+- **Decision**: `users` kiêm credentials (`password_hash` bcrypt, cost mặc định); `POST /api/auth/login` → JWT (HS256, hạn 7 ngày, secret qua env) trong **cookie HttpOnly SameSite=Lax**; `POST /api/auth/logout` xóa cookie; `GET /api/me` trả hồ sơ + hộ. Không refresh token, không tự đăng ký (ngoài phạm vi — dev seed).
+- **Rationale**: Design §2 đã chốt; phạm vi FR-016/002 chỉ cần login email+mật khẩu; bỏ hẳn cơ chế "đối chiếu qua email" (workaround Supabase cũ).
+- **Alternatives**: session server-side (thêm bảng/state không cần thiết ở MVP); Authorization header (cookie HttpOnly an toàn XSS hơn cho web).
 
-## R5. Bất biến "loại cố định sau khi tạo" (FR-005)
+## D5. Phạm vi hộ (thay RLS) *(carry-over R10/R12 về ngữ nghĩa)*
 
-- **Decision**: Cột `type` không cho UPDATE (trigger từ chối thay đổi `type`); UI chỉnh sửa chỉ phơi bày tên & biểu tượng.
-- **Rationale**: Giữ báo cáo/ngân sách nhất quán; hàng rào DB phòng lỗi client.
-- **Alternatives considered**: Chỉ chặn ở client (rủi ro nếu gọi trực tiếp API) — loại.
+- **Decision**: Middleware `authenticate` (JWT → user) + `RequireHousehold` (tra `household_members`, gắn `household_id` vào context); MỌI query storage filter theo `household_id`; bản ghi ngoài hộ trả **404** (không lộ tồn tại). Không có vai trò — ngang quyền (carry R11/FR-021).
+- **Rationale**: Một tầng phân quyền duy nhất, dễ kiểm thử (biz/integration test); giữ đúng ngữ nghĩa cô lập của RLS cũ (FR-018).
+- **Alternatives**: RLS trên Postgres tự quản (hai tầng, thừa khi API là cổng duy nhất).
 
-## R6. Xóa danh mục an toàn (FR-007, FR-008, FR-009, FR-012, SC-007)
+## D6. Chống ghi đè thầm lặng *(carry-over R13)*
 
-- **Decision**: Thực hiện qua một thao tác giao dịch (transaction/RPC Postgres): khi danh mục (và các con) còn giao dịch → bắt buộc **gán lại** sang danh mục **cùng loại** hoặc **xóa** giao dịch, rồi mới xóa danh mục. Không dùng `ON DELETE CASCADE` ngầm cho giao dịch.
-- **Rationale**: Bảo đảm "không bao giờ để lại giao dịch mất danh mục"; xử lý cha kéo theo con trong cùng một bước nguyên tử.
-- **Alternatives considered**: Cascade xóa giao dịch tự động (vi phạm yêu cầu phải hỏi gán lại/xóa); soft-delete danh mục (đó là tính năng Ẩn — UC-CAT-06, khác xóa).
+- **Decision**: Giữ `categories.updated_at` làm mốc lạc quan: client gửi `expected_updated_at` khi sửa/xóa; storage chạy `UPDATE/DELETE ... WHERE id = ? AND updated_at = ?`; 0 hàng → phân biệt `ErrConcurrencyConflict` (bản ghi đã đổi) vs `ErrRecordGone` (đã xóa). `updated_at` do biz/GORM hook cập nhật (bỏ trigger touch cũ).
+- **Rationale**: Ngữ nghĩa giữ nguyên từ bản cũ (quickstart #16); GORM hỗ trợ conditional update tự nhiên.
+- **Alternatives**: cột version int (tương đương, thêm cột mới vô cớ); khóa bi quan (quá nặng cho hộ 2–8 người).
 
-## R7. Cơ chế gợi ý danh mục (FR-015, BR-CAT-007)
+## D7. Gợi ý danh mục *(carry-over — FR-015, không AI/ML)*
 
-- **Decision**: Engine **rule-based + lịch sử**, KHÔNG AI/ML:
-  1. Khớp từ khóa theo quy tắc trên mô tả (bảng `categorization_rules`: keyword → category), VÀ
-  2. Tần suất lịch sử phân loại của chính người dùng (suy ra từ `transactions`: mô tả tương tự → danh mục hay dùng).
-  Gợi ý phải cùng loại Thu/Chi đang chọn; luôn cho phép ghi đè.
-- **Rationale**: Đáp ứng chốt Clarifications 2026-06-24; triển khai được hoàn toàn ở client hoặc bằng truy vấn Postgres, đo SC-004 (≥60% chấp nhận).
-- **Alternatives considered**: ML on-device/cloud (ngoài phạm vi, Out of Scope BR-001).
+- **Decision**: Giữ mô hình `categorization_rules` (household_id, keyword, category_id, match_count): `GET /api/categories/suggest?description=&type=` — normalize (lowercase, bỏ dấu tùy chọn), match keyword chứa-trong-mô-tả cùng hộ + cùng loại, ưu tiên `match_count` cao nhất; khi lưu giao dịch có mô tả, biz **upsert** rule (keyword ← mô tả chuẩn hóa, tăng `match_count`) — "học" từ lịch sử chung của hộ.
+- **Rationale**: Đúng Clarifications 2026-06-24 (rule-based + lịch sử, ghi đè được); chuyển từ RPC/SQL cũ sang biz Go thuần — dễ unit test.
+- **Alternatives**: full-text search Postgres (quá cỡ cho keyword match MVP); AI/ML (Out of Scope BR-001).
 
-## R8. Xác thực & danh tính người dùng
+## D8. Đồng bộ realtime giữa thành viên *(thay Supabase Realtime)*
 
-- **Decision**: Supabase Auth (email/mật khẩu) cho MVP; người dùng ánh xạ tới `auth.users`. Mỗi người dùng thuộc một **hộ** qua bảng membership (R10/R11).
-- **Rationale**: Tính năng phân loại giả định "đã đăng nhập và là thành viên một hộ" (precondition mọi UC).
-- **Open (không chặn)**: social login/biometric là cải tiến sau.
+- **Decision**: Local **pubsub** (mẫu learn_go) → subscriber đẩy sang **wshub** theo household; mutation danh mục/quy tắc/giao dịch publish `{type: "categories_changed"|"transactions_changed"}`; web nhận qua `WS /ws` (auth bằng cookie khi handshake) và **refetch** store liên quan. Fallback: refetch khi tab focus.
+- **Rationale**: Design §3 đã chốt; giữ ngữ nghĩa invalidation của bản cũ nên use case/quickstart không đổi; mục tiêu ≤ 5s thoải mái với broadcast trực tiếp.
+- **Alternatives**: SSE (đủ dùng nhưng user chọn WebSocket); polling (sát ngưỡng, tốn request).
 
-## R9. Bộ danh mục mặc định (FR-001) — Open Question của spec
+## D9. Danh mục mặc định theo hộ *(carry-over R9)*
 
-- **Decision (giả định, cần nghiệp vụ chốt)**: Seed **khi tạo hộ** (không phải khi tạo từng tài khoản) — Chi: Ăn uống, Di chuyển, Hóa đơn, Mua sắm, Giải trí, Sức khỏe; Thu: Lương, Thưởng. Đối xử như danh mục tự tạo (sửa/ẩn/xóa được). Cả hộ dùng chung.
-- **Rationale**: Bám ví dụ BR-001; cho phép US1 hoạt động ngay; tránh trùng lặp seed cho từng thành viên.
-- **Alternatives considered**: Seed mỗi người dùng (sai — sẽ trùng lặp trong sổ chung); không seed (vi phạm FR-001/US1 #4).
-- **⚠ NEEDS BUSINESS CONFIRMATION**: danh sách cuối cùng — không chặn thiết kế.
+- **Decision**: Bộ danh mục mặc định (Chi: Ăn uống, Di chuyển, Hóa đơn, Mua sắm, Giải trí, Sức khỏe, Khác; Thu: Lương, Thưởng, Khác — chờ nghiệp vụ chốt) được seed **theo hộ** bằng logic app trong `module/household` (hàm `SeedDefaultCategories` gọi khi hộ được tạo); `cmd/seed` (dev-only) tạo users Alice/Bob/Carol + hộ A/B và gọi hàm này. KHÔNG seed qua migration.
+- **Rationale**: Carry đúng R9 (seed theo hộ, `is_default=true`); tách seed dev khỏi migrations (design §2); hộ mới trong tương lai (feature Quản lý hộ) tái dùng hàm này.
+- **Alternatives**: seed trong migration (trộn dữ liệu dev vào schema — đã loại ở design).
 
-## R10. Mô hình chia sẻ — sổ chung hộ gia đình (cập nhật 2026-06-29)
+## D10. Front-end
 
-- **Decision**: Thêm thực thể **`households`** và **`household_members`** (membership). `categories`, `transactions`, `categorization_rules` gắn **`household_id`** thay vì `user_id`. Cả danh mục VÀ giao dịch dùng chung trong hộ.
-- **Rationale**: Người dùng chốt "sổ chung cả nhà". Đây là mẫu multi-tenant theo hộ; mọi truy vấn/RLS xoay quanh `household_id`.
-- **Alternatives considered**: Chung danh mục nhưng riêng giao dịch (người dùng không chọn); giữ per-user + view tổng hợp (không phải "sổ chung").
-- **Giả định**: mỗi người dùng thuộc **một hộ** ở MVP (bảng membership vẫn hỗ trợ nhiều, nhưng UI chọn 1 hộ hiện tại).
+- **Decision**: Vue 3 + Vite + TypeScript + **Pinia** (stores: auth, categories, transactions) + Vue Router (guard chưa đăng nhập → /login); mobile-first; gọi API qua fetch wrapper (`src/web/src/api/`), lỗi theo format `app_response`; components chính: `CategoryPicker` (lọc theo loại, nhóm cha/con, ẩn danh mục hidden), `SuggestionChip`, `DeleteReassignDialog`; Vite dev proxy `/api` + `/ws` → Go (cookie same-origin).
+- **Rationale**: Design §1 đã chốt; Pinia store + WS invalidation tái tạo pattern Riverpod provider + realtime cũ.
+- **Alternatives**: Nuxt (SSR không cần); axios (fetch đủ).
 
-## R11. Phân quyền — mọi thành viên ngang quyền (cập nhật 2026-06-29)
+## D11. Testing
 
-- **Decision**: Không có vai trò quản trị; **mọi thành viên có quyền ngang nhau** (tạo/sửa/xóa danh mục, nhập/sửa/xóa giao dịch). `household_members` không cần cột `role` để gác quyền; (tùy chọn lưu `joined_at`, `created_by` cho audit).
-- **Rationale**: Người dùng chốt "mọi người ngang quyền" → đơn giản hóa, không thêm actor Quản trị, không cổng quyền trong use case.
-- **Hệ quả**: Không cần thêm tác nhân mới ngoài "Thành viên hộ" trong sơ đồ use case; chỉ đổi nhãn actor từ "Người dùng" → "Thành viên hộ gia đình".
-- **Mời thành viên (dependency)**: vì ngang quyền, bất kỳ thành viên nào cũng mời được (mã/đường link mời); chi tiết thuộc feature Quản lý hộ.
+- **Decision**: Go — unit `biz` (validate, suggest, delete-reassign, conflict) với storage mock (interface theo learn_go), integration `storage` với Postgres docker (goose up trong test setup); `httptest` cho transport + middleware. Web — Vitest cho stores/components. E2E — **Playwright** tại `src/web/e2e/`: 17 kịch bản quickstart, multi-context cho #13–#17 (Alice/Bob cùng hộ + Carol hộ B).
+- **Rationale**: Design §6 + quyết định Playwright 2026-07-10; multi-context thay cách "2 phiên e2e" cũ.
+- **Alternatives**: Cypress (multi-session yếu hơn); testcontainers-go (dùng compose sẵn có đủ).
 
-## R12. RLS theo membership (cập nhật 2026-06-29)
+## D12. Xóa danh mục an toàn *(carry-over — thay RPC `delete_category`)*
 
-- **Decision**: Policy: bản ghi truy cập được nếu `household_id IN (SELECT household_id FROM household_members WHERE user_id = auth.uid())`. Đóng gói bằng hàm `is_member(household uuid)` (SECURITY DEFINER, STABLE) để tránh lặp và đệ quy RLS.
-- **Rationale**: Thay thế `user_id = auth.uid()` cũ; cho phép chia sẻ trong hộ nhưng cô lập **giữa các hộ**.
-- **Alternatives considered**: Kiểm quyền ở client (rủi ro); JWT custom claim chứa household_id (nhanh hơn nhưng phải refresh khi đổi hộ) — để tối ưu sau.
+- **Decision**: `DELETE /api/categories/{id}` body `{mode: "reassign"|"delete_transactions", target_category_id?, expected_updated_at}` — biz chạy MỘT DB transaction: (1) kiểm đích cùng loại + cùng hộ (FR-009), (2) xử lý danh mục con theo cùng cơ chế (FR-012), (3) gán lại hoặc xóa giao dịch liên quan, (4) xóa danh mục; 0 giao dịch liên quan → xóa ngay không cần mode.
+- **Rationale**: Nguyên tử như RPC cũ nhưng nằm ở biz (test được); không cascade ngầm — không bao giờ để giao dịch mồ côi (SC-007).
+- **Alternatives**: ON DELETE CASCADE (mất dữ liệu ngầm — cấm); soft-delete danh mục (ẩn đã có FR-020 riêng).
 
-## R13. Đồng thời nhiều thành viên (concurrency) (mới)
+## Unknowns còn lại
 
-- **Decision**: Dùng cập nhật lạc quan dựa trên `updated_at`/version; với xóa danh mục dùng RPC nguyên tử (đã có) để tránh đua. Hiển thị thông báo nếu bản ghi đã bị thành viên khác đổi/xóa. Cân nhắc **Supabase Realtime** để làm tươi danh sách.
-- **Rationale**: Sổ chung ⇒ hai thành viên có thể sửa/xóa cùng danh mục đồng thời; cần tránh ghi đè thầm lặng và giao dịch mồ côi.
-- **Alternatives considered**: Khóa bi quan (phức tạp, kém UX mobile); bỏ qua (rủi ro mất dữ liệu).
-
-## R14. Ghi nhận người nhập giao dịch (authorship) (mới)
-
-- **Decision**: `transactions.created_by` (uuid → auth.users) ghi thành viên đã nhập; hiển thị "ai nhập" trong sổ chung. Không gác quyền sửa/xóa theo người nhập (mọi người ngang quyền).
-- **Rationale**: Sổ chung cần minh bạch nguồn gốc giao dịch; phục vụ báo cáo theo thành viên sau này.
-- **Alternatives considered**: Không lưu người nhập (mất minh bạch trong sổ chung).
-
-## Tổng hợp
-
-Các điểm kỹ thuật đã được quyết, gồm cả thay đổi **sổ chung hộ gia đình** (R10–R14). Mục chờ nghiệp vụ: danh sách danh mục mặc định (R9, seed theo hộ) và **feature Quản lý hộ** (tạo/mời/tham gia) là **dependency** ngoài phạm vi feature này. Lưu ý quan trọng: **spec (FR-018, Assumptions, BR-001 Out of Scope) cần cập nhật** để khớp mô hình chia sẻ — xem plan.md "Tác động tới spec".
+- Danh sách danh mục mặc định cuối cùng: chờ nghiệp vụ (Open Question BR-001) — seed dev dùng danh sách đề xuất D9.
+- Không còn NEEDS CLARIFICATION kỹ thuật nào.

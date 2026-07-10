@@ -28,7 +28,9 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 - Chạy `/speckit-analyze` để phát hiện lệch nhau giữa spec ↔ plan ↔ tasks sau khi cập nhật.
 
 <!-- SPECKIT START -->
-For technologies and project structure, read the re-platform design (authoritative for the stack):
+For technologies, project structure, and other important context, read the current plan:
+`specs/001-transaction-categorization/plan.md` (re-plan Go+Vue, 2026-07-10)
+Stack decisions are authoritative in the re-platform design:
 `docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md`
 
 > ⚠️ **Re-platform (2026-07-09/10)**: Flutter + Supabase have been REMOVED (code in `src/` deleted;
@@ -39,9 +41,10 @@ For technologies and project structure, read the re-platform design (authoritati
 > not yet scaffolded.
 
 Feature status:
-- **001-transaction-categorization**: 🔁 re-implementation pending (was implemented & verified on
-  the old stack; code removed). Spec/BR/use cases unchanged; plan/design artifacts + tasks await
-  rewrite via `/speckit-plan` + `/speckit-tasks`.
+- **001-transaction-categorization**: 🔁 re-implementation pending — design artifacts REWRITTEN for
+  Go+Vue (2026-07-10: plan/research/data-model/contracts/quickstart; contracts = `category-api.md` +
+  `db-schema.sql`). Includes the minimal identity foundation (users+auth+household scope) since 001
+  now goes FIRST. `tasks.md` still legacy — regenerate via `/speckit-tasks`.
 - **002-transaction-tracking**: spec v4 complete; its design artifacts describe the legacy stack —
   await rewrite (see banners in each file).
 - **003-budgeting**: spec v1 complete (tech-agnostic), awaiting plan.
