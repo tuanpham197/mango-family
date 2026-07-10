@@ -31,6 +31,8 @@ go run .                               # hoặc air (hot reload)
 cd ../web && npm install && npm run dev
 ```
 
+> **Tắt lối**: `src/Makefile` gói sẵn toàn bộ — `make tools && make dev && make seed`, rồi `make api` + `make web` (2 terminal); test: `make test`, `make test-e2e`. Xem `make help`.
+
 ## Kiểm chứng theo Acceptance Criteria
 
 Mỗi kịch bản tương ứng một Playwright spec trong `src/web/e2e/`. "Pass" = quan sát đúng kết quả mong đợi.
@@ -72,3 +74,4 @@ mặc định** chờ nghiệp vụ chốt (research D9); (2) **tạo hộ & m�
 ## History
 
 - 2026-07-10: Viết lại cho stack Go + Vue (re-platform) — giữ nguyên 17 kịch bản nghiệp vụ, thêm #0 (đăng nhập nền tảng); setup đổi sang docker compose + goose + seed + Vite; e2e chuyển sang Playwright multi-context.
+- 2026-07-10 (b): thêm ghi chú `src/Makefile` (up/migrate/seed/api/web/test) làm tắt lối cho Setup.

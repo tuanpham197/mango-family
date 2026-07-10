@@ -1,0 +1,24 @@
+# Dev infrastructure — Household Finance (Go + Vue re-platform 2026-07)
+# Chỉ Postgres chạy trong docker khi dev; api/web chạy ngoài (make api / make web).
+# Design: ../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: finance_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-finance_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-finance_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

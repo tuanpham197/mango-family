@@ -28,6 +28,8 @@ go run .                                            # hoặc air — cổng 8080
 cd ../web && npm install && npm run dev             # Vite proxy /api + /ws
 ```
 
+> **Tắt lối**: dùng `src/Makefile` — `make dev && make seed`, rồi `make api` + `make web`; test: `make test`, `make test-e2e`. Xem `make help`.
+
 ## Kiểm chứng theo Acceptance Criteria
 
 Mỗi kịch bản tương ứng một Playwright spec trong `src/web/e2e/`. "Pass" = quan sát đúng kết quả mong đợi.
@@ -73,3 +75,4 @@ Alice/Bob + Carol; #23 kiểm chống trùng khi thử lại; đối chiếu s�
 ## History
 
 - 2026-07-10: Viết lại cho stack Go + Vue (re-platform) — giữ nguyên 23 kịch bản nghiệp vụ; setup đổi sang goose 00006/00007 + seed app-logic; truy vết R16/R18/R20 → D14/D15/D17; e2e Playwright multi-context.
+- 2026-07-10 (b): thêm ghi chú `src/Makefile` làm tắt lối cho Setup.

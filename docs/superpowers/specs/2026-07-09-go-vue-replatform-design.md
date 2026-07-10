@@ -19,7 +19,7 @@ Monorepo giữ `src/` làm gốc:
 
 ```
 src/
-├── api/                          # Go 1.22+ · Gin · GORM · layout theo learn_go
+├── api/                          # Go 1.26+ · Gin · GORM · layout theo learn_go
 │   ├── main.go                   # entry: load env, kết nối Postgres (GORM), appctx, chạy router
 │   ├── main_route.go             # đăng ký route các module
 │   ├── .env.example · .air.toml · Dockerfile
@@ -41,7 +41,8 @@ src/
 ├── web/                          # Vue 3 + Vite + TypeScript + Pinia + Vue Router · mobile-first
 │   └── src/{views,components,stores,composables,api,router}
 ├── db/migrations/                # SQL thuần qua goose — pressly/goose (KHÔNG dùng GORM AutoMigrate)
-└── docker-compose.yml            # Postgres 16 cho dev (+ api dev qua air nếu muốn)
+├── docker-compose.yml            # Postgres 16 cho dev (+ api dev qua air nếu muốn)
+└── Makefile                      # lệnh dev: up/down · migrate-up/down/status/create · seed · api/dev-api/web · build · test-* (đã tạo 2026-07-10)
 ```
 
 - Mỗi module theo đúng mẫu learn_go: `model/` (GORM entity + filter) · `biz/` (business logic, unit-testable) · `storage/` (GORM queries) · `transport/gin<module>/` (handlers). Map tự nhiên từ Clean Architecture cũ: biz ↔ usecases, storage ↔ datasources, transport ↔ presentation.
