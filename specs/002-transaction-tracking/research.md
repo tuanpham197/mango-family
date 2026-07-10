@@ -1,95 +1,60 @@
-# Phase 0 — Research: Ghi Chép Thu Nhập và Chi Phí
+# Phase 0 — Research: Ghi Chép Thu Nhập và Chi Phí (Go + Vue re-plan)
 
-**Date**: 2026-07-06 · **Feature**: 002-transaction-tracking · **Plan**: [plan.md](./plan.md)
+**Date**: 2026-07-10 · **Feature**: 002-transaction-tracking · **Plan**: [plan.md](./plan.md)
 
-Giải quyết các điểm kỹ thuật chưa chốt trước khi thiết kế. Tái dùng các quyết định R1–R14 của
-feature 001 (stack, RLS membership, concurrency R13, realtime…); dưới đây chỉ là điểm MỚI của 002,
-đánh số tiếp **R15–R21**.
+> ♻️ Thay thế bản research Supabase 2026-07-06 (R15–R21 — xem git history). Kế thừa toàn bộ
+> **D1–D12** của [research 001 (Go+Vue)](../001-transaction-categorization/research.md); dưới đây
+> chỉ là điểm MỚI của 002, đánh số tiếp **D13–D19**. Quyết định nghiệp vụ của bản cũ được giữ
+> nguyên ngữ nghĩa và ghi chú *(carry-over Rxx)*.
 
-## R15. Người dùng độc lập & cầu nối phiên đăng nhập (đã chốt 2026-07-06)
+## D13. Tài khoản mặc định của hộ *(carry-over R17 — thu gọn BR-005)*
 
-- **Decision**: Bảng `public.users` **độc lập** (PK riêng `gen_random_uuid()`, KHÔNG FK sang
-  `auth.users`); email unique là danh tính; phiên đăng nhập đối chiếu qua hàm
-  `current_user_id()` (tra `users` theo email trong phiên). Mọi FK người (membership,
-  `created_by`) trỏ về `users.id`; `created_by` do trigger `set_created_by` tự gán —
-  client không cần biết `users.id`.
-- **Rationale**: Yêu cầu người dùng (2026-07-06): bảng users là danh bạ của app, không phụ thuộc
-  cấu trúc hệ xác thực; mật khẩu vẫn do Supabase Auth giữ (không tự chế lưu mật khẩu).
-- **Alternatives considered**: `users.id` FK = `auth.users.id` (bị bác — muốn độc lập cấu trúc);
-  tự xây tầng xác thực riêng lưu mật khẩu trong users (bác — rủi ro bảo mật, phải làm lại toàn bộ RLS).
-- **Hiện trạng**: `0011_users.sql` + `setup_dev.sql` (refresh) + `current_household.dart` đã viết.
+- **Decision**: Bảng `accounts` (id, household_id, name, type ∈ CASH/BANK/EWALLET/CREDIT, `initial_balance` default 0, created_by, created_at). Tài khoản mặc định **"Tiền mặt" (CASH)** tạo bằng **logic app**: mở rộng `SeedDefaults` của `module/household` (cùng chỗ seed danh mục mặc định — D9); `cmd/seed` backfill cho hộ dev. KHÔNG trigger DB, KHÔNG seed trong migration.
+- **Rationale**: FR-006/BR-TRK-006 cần tài khoản ngay nhưng BR-005 chưa triển khai; một chỗ duy nhất định nghĩa "hộ mới có gì" — dễ test biz, nhất quán với D9; `initial_balance` giữ chỗ cho BR-005 mà không phá công thức số dư.
+- **Alternatives**: trigger after-insert on households (bản cũ — bỏ vì logic app là writer duy nhất, D3); hoãn account sang BR-005 (bác — BR-TRK-006 In Scope).
 
-## R16. Số dư tài khoản — view suy ra, không cột materialized
+## D14. Số dư — view suy ra *(carry-over R16, giữ nguyên)*
 
-- **Decision**: **View `account_balances`**: số dư = tổng có dấu của giao dịch
-  (`INCOME` cộng, `EXPENSE` trừ) theo `account_id`, cộng số dư ban đầu của tài khoản.
-  Không lưu cột `balance` tự cập nhật bằng trigger ở MVP.
-- **Rationale**: SC-004 đòi 100% khớp tổng bút toán sau mọi thêm/sửa/xóa — view suy ra **đúng theo
-  định nghĩa**, không có rủi ro trigger drift khi sửa số tiền/đổi tài khoản/đổi loại/xóa; thang dữ
-  liệu (nghìn giao dịch/hộ, index theo `account_id`) đủ nhanh. Khớp Assumption spec: "số dư là giá
-  trị suy ra nhất quán; không ràng buộc cách hiện thực".
-- **Alternatives considered**: cột `accounts.balance` + trigger cộng dồn (nhanh hơn khi đọc nhưng
-  4 đường mutate × nhiều cột thay đổi → dễ lệch, khó chứng minh SC-004); tính ở client (sai khi
-  nhiều thành viên, không tin được).
-- **Ghi chú**: entity model ghi `ACCOUNT.balance` là thuộc tính — hiện thực bằng view (giá trị suy
-  ra), đúng constraint đã ghi. Khi dữ liệu lớn, chuyển sang materialized + reconcile là tối ưu sau.
+- **Decision**: View **`account_balances`**: `balance = initial_balance + Σ(amount × CASE type WHEN 'INCOME' THEN 1 ELSE -1 END)` theo `account_id` (+ `household_id` để lọc). View thường (không materialized), tạo trong `00006_accounts.sql` (bọc `-- +goose StatementBegin/End`); GORM map model read-only; index `idx_transactions_account`.
+- **Rationale**: SC-004 đòi 100% khớp tổng bút toán sau MỌI thao tác — view đúng theo định nghĩa, không rủi ro drift; thang nghìn giao dịch/hộ đủ nhanh. (Không còn `security_invoker` — RLS đã bỏ, phạm vi hộ do API lọc.)
+- **Alternatives**: cột balance + cập nhật trong biz (4 đường mutate → khó chứng minh SC-004); tính ở client (sai khi nhiều thành viên).
 
-## R17. Tài khoản mặc định của hộ (thu gọn BR-005)
+## D15. Chặn ngày tương lai *(carry-over R18 — chuyển từ trigger về biz)*
 
-- **Decision**: Bảng `accounts` (id, household_id, name, type ∈ CASH/BANK/EWALLET/CREDIT,
-  initial_balance mặc định 0, created_by, timestamps). **Seed "Tiền mặt" (CASH)** cho mọi hộ hiện có
-  (migration) và hộ tạo mới (trigger after insert on households). Form nhập: hộ chỉ có một tài
-  khoản → chọn sẵn (FR-006).
-- **Rationale**: FR-006/BR-TRK-006 cần tài khoản ngay nhưng BR-005 chưa triển khai — mirror đúng
-  cách 001 xử lý tiền đề hộ (seed sẵn). `initial_balance` để BR-005 sau này đặt số dư ban đầu mà
-  không phá công thức view.
-- **Alternatives considered**: hoãn account_id sang BR-005 (bác — BR-TRK-006 In Scope); bảng
-  accounts đầy đủ BR-005 luôn (bác — phình phạm vi: chuyển tiền, điều chỉnh số dư…).
+- **Decision**: Chặn 2 lớp: client (date picker `max = hôm nay`) + **biz** `CreateTransaction`/`UpdateTransaction` từ chối `transaction_date > now() + 1 ngày` (nới lệch múi giờ) với mã `FUTURE_DATE_NOT_ALLOWED`. Không dùng trigger DB (D3).
+- **Rationale**: API là writer duy nhất; lỗi từ biz có ngữ nghĩa (field-level) cho form; nới +1 ngày tránh từ chối oan múi giờ sớm hơn server.
+- **Alternatives**: trigger `enforce_txn_rules` (bản cũ — thừa khi có API); CHECK với now() (semantics gây ngạc nhiên khi restore).
 
-## R18. Chặn ngày tương lai (FR-005)
+## D16. Sổ giao dịch — truy vấn, tên người nhập, phân trang *(carry-over R19)*
 
-- **Decision**: Chặn 2 lớp — client (date picker giới hạn `lastDate = now`) + **DB trigger**
-  `enforce_txn_rules` mở rộng: `transaction_date > now() + interval '1 day'` → raise (nới 1 ngày
-  cho lệch múi giờ thiết bị).
-- **Rationale**: Hàng rào DB là chốt cuối như mọi bất biến khác của dự án; nới nhỏ tránh từ chối
-  oan người dùng ở múi giờ sớm hơn server.
-- **Alternatives considered**: CHECK constraint với `now()` (hợp lệ ở Postgres nhưng semantics gây
-  ngạc nhiên khi restore/replicate — trigger rõ ràng hơn); chỉ chặn client (không đủ).
+- **Decision**: `GET /api/transactions` join/preload `users(display_name)` + `categories(name, icon)` + `accounts(name)` một round-trip; `ORDER BY transaction_date DESC, id DESC`; phân trang offset 50/trang (infinite scroll); response embed `created_by_name`/`category_name`/`account_name`. Realtime: WS `transactions_changed` → store refetch trang hiện tại.
+- **Rationale**: Đủ dữ liệu hiển thị FR-008 (tên, không phải mã) trong một request; offset đơn giản đủ cho hàng nghìn bản ghi.
+- **Alternatives**: cursor pagination (tối ưu sau nếu cần); view join sẵn (artifact thừa).
 
-## R19. Sổ giao dịch — truy vấn, tên người nhập, phân trang
+## D17. Sửa/xóa đồng thời *(carry-over R20 — mở rộng D6 sang transactions)*
 
-- **Decision**: Truy vấn `transactions` kèm **embed** `users(display_name)` (FK `created_by` →
-  `users.id` cho phép join qua PostgREST) + `categories(name, icon)` + `accounts(name)`;
-  `order=transaction_date.desc`, phân trang theo range (50 bản ghi/trang, infinite scroll).
-  Realtime: tái dùng `subscribeHouseholdChanges` (đã subscribe bảng `transactions`) → invalidate
-  provider sổ.
-- **Rationale**: Một round-trip đủ dữ liệu hiển thị (FR-008: tên, không phải mã); range pagination
-  đơn giản, đủ cho hàng nghìn bản ghi.
-- **Alternatives considered**: view join sẵn phía DB (thêm artifact không cần thiết); tải toàn bộ
-  rồi lọc client (không scale).
+- **Decision**: `transactions.updated_at` làm mốc lạc quan (00007): PATCH/DELETE kèm `expected_updated_at`; storage chạy conditional UPDATE/DELETE — 0 hàng → tra tồn tại để phân biệt `CONCURRENCY_CONFLICT` 409 (đã đổi → client tải lại data mới) vs `RECORD_GONE` 404 (đã xóa → thông báo + về sổ — UC-TRK-04 E3/UC-TRK-05 E1). `updated_at` do GORM hook cập nhật.
+- **Rationale**: Nhất quán cơ chế D6 của categories (đã kiểm chứng ở 001 #16); UI tái dùng cùng pattern xử lý lỗi.
+- **Alternatives**: version int (cột thừa); khóa bi quan (kém UX).
 
-## R20. Sửa/xóa đồng thời (mở rộng R13 sang transactions)
+## D18. Sửa giao dịch đổi loại Thu ⇄ Chi *(carry-over R21)*
 
-- **Decision**: Thêm `transactions.updated_at` + trigger touch (touch function dùng chung
-  `touch_updated_at()` đã có). Sửa: UPDATE kèm điều kiện mốc `updated_at` — 0 hàng khớp → phân biệt
-  "đã đổi" (tải lại, báo `ConcurrencyConflict`) vs "đã xóa" (báo không còn tồn tại, về sổ — UC-TRK-04 E3).
-  Xóa: DELETE theo id — nếu 0 hàng (người khác xóa trước) → thông báo nhẹ + làm tươi sổ (UC-TRK-05 E1).
-- **Rationale**: Nhất quán cơ chế đã kiểm chứng e2e ở 001 (#16); UI/Failure (`ConcurrencyConflict`)
-  tái dùng nguyên vẹn.
-- **Alternatives considered**: khóa bi quan (kém UX mobile); version int (tương đương updated_at,
-  thêm cột thừa).
+- **Decision**: Web `TransactionFormView` chế độ sửa: đổi loại → `CategoryPicker` coi danh mục cũ (khác loại) là "chưa chọn" → buộc chọn lại; biz validate type giao dịch = type danh mục (đã có từ 001 — chạy cho cả update).
+- **Rationale**: Không cần cơ chế mới; bất biến loại thực thi ở biz cho mọi đường ghi.
+- **Alternatives**: cấm đổi loại khi sửa (bác — FR-009 cho phép sửa mọi trường).
 
-## R21. Sửa giao dịch đổi loại Thu ⇄ Chi (FR-009)
+## D19. Định danh người dùng *(thay R15 — đã hiện thực ở 001)*
 
-- **Decision**: UI tái dùng mẫu 001: `CategorySelectField` coi danh mục khác loại là "chưa chọn"
-  (effective-null) → buộc chọn lại; hàng rào DB `enforce_txn_rules` (type giao dịch = type danh mục,
-  cùng hộ) đã có từ 001 chạy cho cả UPDATE.
-- **Rationale**: Không cần cơ chế mới — bất biến loại đã được thực thi 2 lớp từ 001.
-- **Alternatives considered**: cấm đổi loại khi sửa (bác — FR-009 cho phép sửa mọi trường).
+- **Decision**: KHÔNG còn hạng mục riêng — `users` kiêm credentials (bcrypt) + JWT cookie + middleware phạm vi hộ đã dựng ở 001 (D4/D5); `created_by` do biz gán từ phiên (không trigger). US5/FR-015/FR-016 của spec 002 được 001 đáp ứng; quickstart 002 chỉ **kiểm chứng lại** (#1–#3).
+- **Rationale**: Re-platform hợp nhất "danh bạ độc lập" và "đăng nhập" (không còn Supabase Auth để đối chiếu email); tránh trùng công việc giữa 2 feature.
+- **Alternatives**: giữ cầu nối email như cũ (vô nghĩa khi tự quản auth).
 
 ## Tổng hợp
 
-Toàn bộ điểm mở của Technical Context đã chốt (R15–R21), không còn NEEDS CLARIFICATION.
-Điểm chờ nghiệp vụ (không chặn): baseline Success Metrics (BR-002 Open Question); danh mục tài
-khoản mặc định cuối cùng thuộc BR-005. Migration hiện có: `0011_users.sql` (nền tảng); sẽ thêm
-`0012_accounts.sql`, `0013_transactions_v2.sql` (xem data-model & contracts).
+Toàn bộ điểm mở đã chốt (D13–D19 + kế thừa D1–D12), không còn NEEDS CLARIFICATION. Điểm chờ nghiệp vụ
+(không chặn): baseline Success Metrics (BR-002); SC-006 ngưỡng 5s cần xác nhận; danh mục tài khoản
+mặc định cuối cùng thuộc BR-005. Migrations sẽ thêm: `00006_accounts.sql`, `00007_transactions_v2.sql`.
+
+## History
+
+- 2026-07-10: Viết lại cho stack Go + Vue (re-platform) — R15→D19 (users kiêm auth từ 001), R16→D14, R17→D13 (bỏ trigger, dùng app logic), R18→D15 (trigger→biz), R19→D16, R20→D17, R21→D18.

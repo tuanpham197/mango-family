@@ -45,8 +45,10 @@ Feature status:
   Go+Vue (2026-07-10: plan/research/data-model/contracts/quickstart; contracts = `category-api.md` +
   `db-schema.sql`). Includes the minimal identity foundation (users+auth+household scope) since 001
   now goes FIRST. `tasks.md` still legacy — regenerate via `/speckit-tasks`.
-- **002-transaction-tracking**: spec v4 complete; its design artifacts describe the legacy stack —
-  await rewrite (see banners in each file).
+- **002-transaction-tracking**: spec v4 complete; design artifacts REWRITTEN for Go+Vue
+  (2026-07-10: plan/research D13–D19/data-model/contracts = `transaction-api.md` + `db-schema.sql`
+  delta/quickstart 23 kịch bản). Extends 001's foundation (accounts + balances view + transactions
+  v2). `tasks.md` still legacy — regenerate via `/speckit-tasks`.
 - **003-budgeting**: spec v1 complete (tech-agnostic), awaiting plan.
 
 Model (unchanged): **shared family household** — multiple members, EQUAL permissions; data shared

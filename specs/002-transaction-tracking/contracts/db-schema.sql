@@ -1,101 +1,59 @@
--- Contract: Supabase/PostgreSQL schema DELTA for Income & Expense Tracking (feature 002)
--- Base: feature 001 schema (households, household_members, categories, transactions,
---       categorization_rules + RLS by membership). This contract layers on top.
--- Executable copies live in src/supabase/migrations/ (0011 written; 0012/0013 at implement).
--- Traceability: [FR-xxx] = spec 002 · [Rnn] = research.md 002 · [BR-TRK/ACC-xxx] = BR-002/BR-005.
+-- Contract: PostgreSQL schema DELTA for Income & Expense Tracking (feature 002) — Go + Vue re-platform
+-- Base: feature 001 schema (users incl. credentials, households, household_members,
+--       categories, transactions minimal, categorization_rules — see
+--       specs/001-transaction-categorization/contracts/db-schema.sql). This contract layers on top.
+-- Executable copies live in src/db/migrations/ (goose): 00006_accounts.sql, 00007_transactions_v2.sql.
+-- NO RLS / NO business triggers — household scoping via API middleware (001 D5); invariants in
+-- Go biz layer inside DB transactions (001 D3); schema keeps CHECK/FK/NOT NULL as last defense.
+-- Traceability: [FR-xxx] = spec 002 · [Dnn] = research 001/002 · [BR-TRK/ACC-xxx] = BR-002/BR-005.
 
 -- =========================================================
--- 0011 · users — INDEPENDENT user directory  [FR-015][FR-016][R15]  (WRITTEN)
--- =========================================================
-create table users (
-    id           uuid primary key default gen_random_uuid(),  -- independent: NO FK to auth
-    email        text not null unique,                        -- login identity, session mapping key
-    display_name text not null,
-    created_at   timestamptz not null default now()
-);
--- session → user bridge (SECURITY DEFINER STABLE)
-create function current_user_id() returns uuid as $$
-    select id from users where email = auth.jwt()->>'email';
-$$ language sql security definer stable;
--- created_by auto-set on households/categories/transactions:
---   new.created_by := coalesce(current_user_id(), new.created_by)   [trigger set_created_by]
--- FK repoint to users(id): household_members.user_id, households/categories/transactions.created_by
--- is_member()/member_self policies recheck via current_user_id()
--- RLS users: SELECT self-or-same-household (shares_household); INSERT/UPDATE self (by email)
-
--- =========================================================
--- 0012 · accounts + default seed + balances view  [FR-006][FR-011][R16][R17]
+-- 00006 · accounts + account_balances view  [FR-006][FR-011][D13][D14]
 -- =========================================================
 create table accounts (
     id              uuid primary key default gen_random_uuid(),
-    household_id    uuid not null references households(id) on delete cascade,
-    name            text not null,                                          -- [BR-ACC-002]
+    household_id    uuid not null references households(id),   -- scope enforced by API [D5/001]
+    name            text not null,                             -- e.g. "Tiền mặt" [BR-ACC-002]
     type            text not null default 'CASH'
-                    check (type in ('CASH','BANK','EWALLET','CREDIT')),     -- [BR-ACC-001]
-    initial_balance numeric(14,2) not null default 0,                       -- [BR-ACC-002]
-    created_by      uuid references users(id),                              -- audit (trigger-set)
+                        check (type in ('CASH','BANK','EWALLET','CREDIT')), -- [BR-ACC-001]
+    initial_balance numeric(14,2) not null default 0,          -- reserved for BR-005 [D13]
+    created_by      uuid references users(id),                 -- audit; set by biz from session
     created_at      timestamptz not null default now()
 );
-create index idx_accounts_hh on accounts(household_id);
-alter table accounts enable row level security;
-create policy member_accounts on accounts
-    using (is_member(household_id)) with check (is_member(household_id));
-create trigger trg_created_by_accounts before insert on accounts
-    for each row execute function set_created_by();
+create index idx_accounts_household on accounts(household_id);
 
--- every household always has at least one account  [R17, edge case spec]
-create function seed_default_account() returns trigger as $$
-begin
-    insert into accounts(household_id, name, type, created_by)
-    values (new.id, 'Tiền mặt', 'CASH', new.created_by);
-    return new;
-end; $$ language plpgsql security definer;
-create trigger trg_seed_default_account after insert on households
-    for each row execute function seed_default_account();
--- + one-shot backfill for existing households without any account
+-- Default account "Tiền mặt" (CASH) is created by APP LOGIC (household SeedDefaults — D13)
+-- for new households, and backfilled by cmd/seed for dev households. NOT seeded here.
 
--- balance is DERIVED — always equals initial + signed sum of its transactions  [FR-011][SC-004][R16]
-create view account_balances with (security_invoker = true) as
-select a.id as account_id,
-       a.household_id,
-       a.initial_balance
-         + coalesce(sum(case t.type when 'INCOME' then t.amount else -t.amount end), 0) as balance
+-- Derived balance — always equals initial_balance + signed sum of transactions [SC-004][D14]
+-- (goose: wrap in -- +goose StatementBegin / StatementEnd)
+create view account_balances as
+select
+    a.id           as account_id,
+    a.household_id as household_id,
+    a.initial_balance
+      + coalesce(sum(case t.type when 'INCOME' then t.amount else -t.amount end), 0)
+                   as balance
 from accounts a
 left join transactions t on t.account_id = a.id
 group by a.id, a.household_id, a.initial_balance;
 
 -- =========================================================
--- 0013 · transactions v2 — account link, optimistic timestamp, date guard
+-- 00007 · transactions v2 — account_id + updated_at  [FR-006][FR-014][D17]
 -- =========================================================
-alter table transactions
-    add column account_id uuid references accounts(id) on delete restrict,  -- [FR-006][BR-TRK-006]
-    add column updated_at timestamptz not null default now();               -- [FR-014][R20]
--- backfill account_id to the household's default account, then SET NOT NULL
-create index idx_transactions_account on transactions(account_id);
-create trigger trg_touch_updated_at_txn before update on transactions
-    for each row execute function touch_updated_at();                       -- reuse 001
+-- Backfill strategy: add column nullable → set to household default account → set not null.
+alter table transactions add column account_id uuid references accounts(id) on delete restrict;
+-- update transactions t set account_id = (select id from accounts a
+--   where a.household_id = t.household_id order by a.created_at limit 1);
+alter table transactions alter column account_id set not null;             -- [BR-TRK-006]
 
--- extend guard: account same household + no future dates  [FR-005][R18]
-create or replace function enforce_txn_rules() returns trigger as $$
-declare v_cat_type text; v_cat_hh uuid; v_acc_hh uuid;
-begin
-    select type, household_id into v_cat_type, v_cat_hh from categories where id = new.category_id;
-    if new.type <> v_cat_type then
-        raise exception 'Transaction type must match category type (FR-014/001)';
-    end if;
-    if new.household_id <> v_cat_hh then
-        raise exception 'Transaction and category must belong to the same household';
-    end if;
-    select household_id into v_acc_hh from accounts where id = new.account_id;
-    if new.household_id <> v_acc_hh then
-        raise exception 'Transaction and account must belong to the same household (FR-006)';
-    end if;
-    if new.transaction_date > now() + interval '1 day' then
-        raise exception 'Future-dated transactions are not supported (FR-005)';
-    end if;
-    return new;
-end; $$ language plpgsql;
+alter table transactions add column updated_at timestamptz not null default now(); -- optimistic mark [D17]
 
--- Optimistic writes (client-side contract, not schema):
---   UPDATE transactions SET ... WHERE id = :id AND updated_at = :last_seen  → 0 rows = conflict
---   DELETE transactions          WHERE id = :id                             → 0 rows = already gone
+create index idx_transactions_account on transactions(account_id);          -- serves balance view [D14]
+
+-- Enforced in Go biz (NOT triggers — D3/001):
+--   * account belongs to the same household as the transaction  [FR-006/007]
+--   * transaction_date not in the future (+1 day timezone slack) [FR-005][D15]
+--   * type matches category type; category same household        [FR-003][D18]
+--   * conditional UPDATE/DELETE ... WHERE updated_at = expected  [FR-014][D17]
+--   * updated_at refreshed via GORM hook on every update
