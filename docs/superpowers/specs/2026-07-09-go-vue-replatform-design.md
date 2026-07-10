@@ -90,7 +90,7 @@ Spec/BR/use case về cơ bản **giữ nguyên** (tech-agnostic) — chỉ tầ
 
 - **Go**: unit test tầng `biz` (validation FR-001…007, quyền theo hộ — theo mẫu `biz/*_test.go` của learn_go); integration test storage + optimistic lock với Postgres (docker); `httptest` cho transport.
 - **Vue**: Vitest (unit/component) cho form validation, store.
-- **E2E**: theo kịch bản quickstart của từng feature (Chrome), giữ nguyên nội dung nghiệp vụ (001) và 23 kịch bản (002).
+- **E2E**: **Playwright** (quyết định 2026-07-10) — test suite tại `src/web/e2e/`, chạy trên Chromium theo kịch bản quickstart của từng feature, giữ nguyên nội dung nghiệp vụ (001) và 23 kịch bản (002). Playwright multi-context phù hợp các kịch bản đa thành viên (Alice/Bob/Carol — 2 phiên song song kiểm realtime ≤ 5s, cô lập hộ, xung đột đồng thời); CI chạy headless qua docker compose (Postgres + api + web build).
 
 ## Rủi ro & lưu ý
 
