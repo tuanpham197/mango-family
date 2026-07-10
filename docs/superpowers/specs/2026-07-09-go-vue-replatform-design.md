@@ -40,12 +40,12 @@ src/
 │       └── transaction/          # feature 002: nhập/sổ/sửa/xóa giao dịch
 ├── web/                          # Vue 3 + Vite + TypeScript + Pinia + Vue Router · mobile-first
 │   └── src/{views,components,stores,composables,api,router}
-├── db/migrations/                # SQL thuần qua golang-migrate (KHÔNG dùng GORM AutoMigrate)
+├── db/migrations/                # SQL thuần qua goose — pressly/goose (KHÔNG dùng GORM AutoMigrate)
 └── docker-compose.yml            # Postgres 16 cho dev (+ api dev qua air nếu muốn)
 ```
 
 - Mỗi module theo đúng mẫu learn_go: `model/` (GORM entity + filter) · `biz/` (business logic, unit-testable) · `storage/` (GORM queries) · `transport/gin<module>/` (handlers). Map tự nhiên từ Clean Architecture cũ: biz ↔ usecases, storage ↔ datasources, transport ↔ presentation.
-- **Migrations là SQL thuần** dù dùng GORM: view `account_balances` (mỏ neo SC-004) và các CHECK constraint (amount > 0, chặn ngày tương lai) không quản được bằng AutoMigrate. Schema tái chế từ `contracts/db-schema.sql` cũ, bỏ toàn bộ phần Supabase (schema `auth`, RLS policies, `current_user_id()`).
+- **Migrations là SQL thuần qua goose** (`pressly/goose`, quyết định 2026-07-10 — thay golang-migrate) dù dùng GORM: view `account_balances` (mỏ neo SC-004) và các CHECK constraint (amount > 0, chặn ngày tương lai) không quản được bằng AutoMigrate. File dạng `-- +goose Up` / `-- +goose Down`; các statement nhiều dòng (view, function) bọc trong `-- +goose StatementBegin/StatementEnd`. Chạy qua CLI goose hoặc nhúng embed.FS trong lệnh `cmd` của api. Schema tái chế từ `contracts/db-schema.sql` cũ, bỏ toàn bộ phần Supabase (schema `auth`, RLS policies, `current_user_id()`).
 - Logic các trigger cũ (`set_created_by`, touch `updated_at`, enforce rules) chuyển vào tầng `biz`; DB giữ constraint làm hàng rào cuối.
 - Khác biệt cố ý so với repo mẫu: **Postgres thay MySQL**, **bcrypt thay md5**, thêm `wshub` (repo mẫu không có WebSocket).
 
