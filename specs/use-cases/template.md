@@ -3,7 +3,7 @@
 - **ID:** UC-XXX
 - **Bounded Context:** <vd: Checkout, Shipping, Billing>
 - **Liên quan tới BR:** BR-YYY
-- **Status:** draft | reviewed | implemented | deprecated
+- **Status:** draft | reviewed | implemented | deprecated | changed (update khi có sự thay đổi specs)
 - **Owner:** <PO/Dev chịu trách nhiệm>
 - **Last updated:** YYYY-MM-DD
 ## Actor
@@ -29,6 +29,7 @@ webhook...
 ...
 ## Postconditions
 - <Trạng thái hệ thống sau khi use case thành công>
+
 ## Acceptance Criteria
 ### AC-1: <Tên ngắn gọn>
 Given: <context>
@@ -43,6 +44,10 @@ And: <expected outcome bổ sung>
 ## Notes
  - Context bổ sung: quyết định lịch sử, lý do nghiệp vụ, link tới ADR, open
 question
+
+## Link file specs change
+ - Link new specs
+
 ## History
 - v1 (YYYY-MM-DD, <author>): initial
 - v2 (YYYY-MM-DD, <author>): added AC-4 for idempotency

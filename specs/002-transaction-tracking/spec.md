@@ -26,6 +26,7 @@ Một thành viên trong hộ mở màn hình nhập giao dịch, nhập số ti
 4. **Given** thành viên nhập mô tả dài hơn 255 ký tự, **When** bấm Lưu, **Then** hệ thống chặn hoặc giới hạn ngay khi nhập, kèm thông báo giới hạn độ dài.
 5. **Given** thành viên mở form nhập, **When** không chỉnh ngày giờ, **Then** giao dịch được ghi với ngày giờ hiện tại; **When** chỉnh sang một ngày trong quá khứ, **Then** giao dịch ghi theo ngày đã chọn.
 6. **Given** giao dịch loại Thu, **When** mở danh sách danh mục, **Then** chỉ danh mục loại Thu hiển thị (liên kết BR-001/BR-CAT-008).
+7. **Given** thành viên chỉnh ngày giờ sang một thời điểm trong tương lai, **When** bấm Lưu, **Then** hệ thống chặn và thông báo không hỗ trợ ngày trong tương lai.
 
 ---
 
@@ -107,7 +108,7 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - **Hai thành viên sửa cùng một giao dịch gần như đồng thời** → không ghi đè thầm lặng; người lưu sau nhận thông báo bản ghi đã thay đổi.
 - **Giao dịch bị thành viên khác xóa trong lúc mình đang mở form sửa** → khi lưu, hệ thống báo giao dịch không còn tồn tại thay vì lỗi khó hiểu.
 - **Hộ chưa có tài khoản nào** → hệ thống bảo đảm luôn có một tài khoản mặc định của hộ để ghi giao dịch (xem Assumptions — phụ thuộc BR-005).
-- **Người dùng chưa có tên hiển thị** (tài khoản tạo trước khi có hồ sơ) → sổ hiển thị email thay cho tên, không bao giờ hiển thị mã định danh thô; hồ sơ được bổ sung tự động khi có thể.
+- **Người dùng chưa có tên hiển thị** → sổ hiển thị email thay cho tên, không bao giờ hiển thị mã định danh thô; hồ sơ được bổ sung tự động khi có thể.
 - **Mất kết nối khi lưu** → thông báo rõ ràng, không tạo bản ghi trùng khi thử lại.
 
 ## Requirements *(mandatory)*
@@ -121,8 +122,8 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - **FR-005**: Ngày giờ giao dịch MUST mặc định là thời điểm hiện tại và MUST cho phép sửa về một thời điểm trong quá khứ; ngày trong tương lai MUST bị từ chối. *(BR-TRK-005; xem Assumptions về giao dịch dự kiến)*
 - **FR-006**: Mỗi giao dịch MUST gắn với một tài khoản của hộ; khi hộ chỉ có một tài khoản, tài khoản đó được chọn sẵn. *(BR-TRK-006; phụ thuộc BR-005 — xem Assumptions)*
 - **FR-007**: Hệ thống MUST xác thực toàn bộ dữ liệu trước khi lưu (số tiền hợp lệ; loại, danh mục và tài khoản bắt buộc) và MUST hiển thị thông báo lỗi rõ ràng theo từng trường; giao dịch không hợp lệ MUST không được lưu. *(BR-TRK-007)*
-- **FR-008**: Thành viên MUST be able to xem danh sách giao dịch của hộ, sắp xếp theo ngày giờ mới nhất trước, mỗi giao dịch hiển thị số tiền, loại, danh mục, ngày giờ và **tên thành viên đã nhập** (tên hiển thị dễ đọc, không phải mã định danh). *(BR-001/BR-CAT-009 — sổ chung minh bạch)*
-- **FR-009**: Thành viên MUST be able to chỉnh sửa mọi thông tin của một giao dịch đã lưu (số tiền, loại, danh mục, mô tả, ngày giờ, tài khoản); dữ liệu sửa MUST qua cùng quy tắc xác thực như khi nhập mới; khi đổi loại Thu/Chi, hệ thống MUST yêu cầu chọn lại danh mục cùng loại mới. *(BR-TRK-008)*
+- **FR-008**: Thành viên MUST xem được danh sách giao dịch của hộ, sắp xếp theo ngày giờ mới nhất trước, mỗi giao dịch hiển thị số tiền, loại, danh mục, ngày giờ và **tên thành viên đã nhập** (tên hiển thị dễ đọc, không phải mã định danh). *(BR-001/BR-CAT-009 — sổ chung minh bạch)*
+- **FR-009**: Thành viên MUST chỉnh sửa được mọi thông tin của một giao dịch đã lưu (số tiền, loại, danh mục, mô tả, ngày giờ, tài khoản); dữ liệu sửa MUST qua cùng quy tắc xác thực như khi nhập mới; khi đổi loại Thu/Chi, hệ thống MUST yêu cầu chọn lại danh mục cùng loại mới. *(BR-TRK-008)*
 - **FR-010**: Việc xóa giao dịch MUST luôn kèm cảnh báo và bước xác nhận rõ ràng trước khi xóa vĩnh viễn. *(BR-TRK-009)*
 - **FR-011**: Sau mỗi thao tác thêm/sửa/xóa giao dịch, số dư của (các) tài khoản liên quan MUST được cập nhật chính xác — kể cả khi sửa số tiền, đổi tài khoản, đổi loại, hoặc thao tác trên giao dịch có ngày trong quá khứ. *(BR-TRK-010)*
 - **FR-012**: Giao dịch MUST thuộc về một hộ gia đình, dùng chung giữa các thành viên trong hộ và cô lập giữa các hộ khác nhau. *(kế thừa mô hình BR-001 — FR-018 của feature 001)*
@@ -133,7 +134,7 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 
 ### Key Entities *(include if feature involves data)*
 
-- **Người dùng (User)**: Danh bạ người dùng **độc lập** của hệ thống — có định danh riêng (`user_id`), email (duy nhất) và tên hiển thị; **không phụ thuộc cấu trúc của cơ chế xác thực**. Phiên đăng nhập được đối chiếu với hồ sơ người dùng **qua email**; mật khẩu/thông tin xác thực do hệ thống đăng nhập quản lý riêng, không nằm trong thực thể này. Quan hệ: được **Thành viên hộ (household_members)** tham chiếu qua `user_id` để xác định ai thuộc hộ nào; được giao dịch/danh mục tham chiếu ở trường "người tạo/người nhập". Đây là thực thể nền tảng — phải tồn tại trước mọi dữ liệu khác của feature này.
+- **Người dùng (User)**: Danh bạ người dùng **độc lập** của hệ thống — có định danh riêng, email (duy nhất) và tên hiển thị; **không phụ thuộc cấu trúc của cơ chế xác thực**. Thông tin xác thực (mật khẩu, phiên đăng nhập) được hệ thống quản lý an toàn; cách liên kết phiên đăng nhập với hồ sơ người dùng là chi tiết hiện thực, không thuộc phạm vi nghiệp vụ của thực thể. Quan hệ: được **Thành viên hộ** tham chiếu qua định danh người dùng để xác định ai thuộc hộ nào; được giao dịch/danh mục tham chiếu ở trường "người tạo/người nhập". Đây là thực thể nền tảng — phải tồn tại trước mọi dữ liệu khác của feature này.
 - **Giao dịch (Transaction)**: Một bút toán Thu hoặc Chi của hộ. Thuộc tính: số tiền (> 0), loại (Thu/Chi), danh mục (bắt buộc, cùng loại, cùng hộ — BR-001), mô tả (tùy chọn, ≤ 255 ký tự), ngày giờ (mặc định hiện tại), tài khoản liên quan, hộ sở hữu, thành viên đã nhập (→ Người dùng). Quan hệ: thuộc một hộ; tham chiếu một danh mục và một tài khoản; do một thành viên tạo.
 - **Tài khoản (Account)** *(định nghĩa đầy đủ ở BR-005, tham chiếu tại đây)*: Nguồn tiền của hộ mà giao dịch được ghi vào; có số dư phản ánh đúng tổng các giao dịch liên quan. Phạm vi này chỉ cần: mỗi giao dịch gắn một tài khoản và số dư tài khoản cập nhật đúng.
 - **Danh mục (Category)** *(định nghĩa ở BR-001/feature 001)*: Nhóm phân loại bắt buộc của giao dịch, cùng loại Thu/Chi, dùng chung trong hộ.
@@ -148,13 +149,13 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - **SC-003**: 100% giao dịch đã lưu có đủ số tiền > 0, loại, danh mục cùng loại và tài khoản; không tồn tại giao dịch thiếu trường bắt buộc.
 - **SC-004**: 100% thao tác thêm/sửa/xóa kết thúc với số dư tài khoản khớp đúng tổng bút toán liên quan (đối chiếu lại toàn bộ luôn khớp).
 - **SC-005**: 100% lượt xóa giao dịch đi qua bước cảnh báo/xác nhận; không có xóa vĩnh viễn nào diễn ra chỉ bằng một thao tác.
-- **SC-006**: Giao dịch do một thành viên nhập hiển thị trong sổ của các thành viên khác cùng hộ trong vòng vài giây.
+- **SC-006**: Giao dịch do một thành viên nhập hiển thị trong sổ của các thành viên khác cùng hộ trong vòng 5 giây. *(ngưỡng đề xuất thay cho "vài giây" — cần nghiệp vụ xác nhận cùng baseline Success Metrics của BR-002)*
 - **SC-007**: 0 trường hợp ghi đè thầm lặng khi hai thành viên sửa cùng một giao dịch — người lưu sau luôn nhận được thông báo.
 
 ## Assumptions
 
-- **Người dùng & đăng nhập là bước nền tảng ĐẦU TIÊN** *(yêu cầu 2026-07-06)*: Khi triển khai feature này, danh sách người dùng (FR-015) phải được dựng **trước mọi phần khác** — thứ tự phụ thuộc: Người dùng → Thành viên hộ → Tài khoản/Giao dịch. Người dùng hiện có (đã đăng nhập được từ trước) được bổ sung hồ sơ tự động, không cần thao tác tay. Vòng đời tài khoản đầy đủ (tự đăng ký, quên mật khẩu, đổi email, xóa tài khoản) nằm ngoài phạm vi — thuộc BR riêng về quản lý người dùng/hộ.
-- **Chiến lược chuyển đổi dữ liệu hiện có** *(quyết định 2026-07-06)*: Mọi liên kết "ai" trong hệ thống (thành viên hộ, người tạo danh mục/giao dịch/hộ) được chuyển về tham chiếu danh sách người dùng mới. Vì đang ở giai đoạn phát triển (chỉ có dữ liệu thử nghiệm), môi trường dev được **làm mới (refresh)**: xóa dữ liệu app và dựng lại theo cấu trúc mới trong một bước; **tài khoản đăng nhập hiện có được giữ nguyên** và hồ sơ người dùng backfill tự động. Với môi trường có dữ liệu thật sau này, việc chuyển đổi phải giữ nguyên dữ liệu (không xóa).
+- **Người dùng & đăng nhập là bước nền tảng ĐẦU TIÊN** *(yêu cầu 2026-07-06)*: Khi triển khai feature này, danh sách người dùng (FR-015) phải được dựng **trước mọi phần khác** — thứ tự phụ thuộc: Người dùng → Thành viên hộ → Tài khoản/Giao dịch. Hồ sơ thiếu tên hiển thị được bổ sung tự động khi đăng nhập, không cần thao tác tay. Vòng đời tài khoản đầy đủ (tự đăng ký, quên mật khẩu, đổi email, xóa tài khoản) nằm ngoài phạm vi — thuộc BR riêng về quản lý người dùng/hộ.
+- **Chiến lược chuyển đổi dữ liệu hiện có** *(quyết định 2026-07-06)*: Mọi liên kết "ai" trong hệ thống (thành viên hộ, người tạo danh mục/giao dịch/hộ) được chuyển về tham chiếu danh sách người dùng mới. Vì đang ở giai đoạn phát triển (chỉ có dữ liệu thử nghiệm), môi trường dev được **làm mới (refresh)**: dữ liệu thử nghiệm dựng lại theo cấu trúc mới trong một bước; người dùng dev được tạo lại bằng dữ liệu khởi tạo (seed). Với môi trường có dữ liệu thật sau này, việc chuyển đổi phải giữ nguyên dữ liệu (không xóa).
 - **Sổ chung hộ gia đình** *(kế thừa BR-001 cập nhật 2026-06-29)*: Giao dịch là dữ liệu chung của hộ; mọi thành viên ngang quyền; cô lập giữa các hộ. Quản lý hộ (tạo/mời/tham gia) vẫn là tiền đề thuộc feature riêng.
 - **Tài khoản là phụ thuộc từ BR-005 (chưa triển khai)**: Để phạm vi này chạy độc lập, mỗi hộ được bảo đảm có sẵn một tài khoản mặc định (ví dụ "Tiền mặt") để ghi giao dịch; việc tạo/quản lý nhiều tài khoản, loại tài khoản và chuyển tiền thuộc BR-005. Khi BR-005 triển khai, form nhập cho phép chọn giữa các tài khoản của hộ.
 - **Số dư là giá trị suy ra nhất quán**: "Cập nhật số dư" nghĩa là số dư tài khoản luôn phản ánh đúng tổng các giao dịch liên quan tại mọi thời điểm; không ràng buộc cách hiện thực (tính lại hay cộng dồn).
@@ -164,3 +165,20 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - **Danh mục dùng lại từ feature 001**: Toàn bộ quy tắc danh mục (bắt buộc, cùng loại, gợi ý, danh mục con) đã được BR-001/feature 001 định nghĩa và triển khai; spec này không định nghĩa lại.
 - **Phần "nhập giao dịch tối thiểu" của feature 001**: Feature 001 đã dựng một luồng nhập giao dịch tối thiểu để kiểm chứng phân loại; feature này mở rộng thành luồng nhập/sửa/xóa đầy đủ theo BR-002 (thêm tài khoản, ngày giờ chỉnh được, xác thực đầy đủ, sổ giao dịch).
 - **Owner & Target Quarter**: TBD trong BR-002; không ảnh hưởng phạm vi chức năng.
+
+## References / Truy vết
+
+> Giữ các liên kết này cập nhật mỗi khi một artifact thay đổi (xem quy tắc lan truyền trong [`CLAUDE.md`](../../CLAUDE.md)).
+
+- **Nguồn (BR)**: [`BR-002`](../business-requirements/BR-002.md) — Ghi chép thu nhập & chi phí; kế thừa mô hình sổ chung hộ gia đình từ [`BR-001`](../business-requirements/BR-001.md) / feature [`001-transaction-categorization`](../001-transaction-categorization/spec.md).
+- **Use cases**: [`UC-TRK-01…05`](../use-cases/002-transaction-tracking/) · sơ đồ [`use-cases.puml`](../diagrams/use-cases.puml).
+- **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md).
+- **Dẫn xuất (design)**: [`plan.md`](plan.md) · [`research.md`](research.md) · [`data-model.md`](data-model.md) · [`contracts/`](contracts/) · [`quickstart.md`](quickstart.md) · [`tasks.md`](tasks.md).
+- **Checklist chất lượng**: [`checklists/requirements.md`](checklists/requirements.md).
+
+## History
+
+- v1 (2026-07-06): tạo spec từ BR-002 (mô hình sổ chung hộ gia đình kế thừa BR-001 v2); hai Open Question của BR-002 chốt bằng mặc định an toàn trong Assumptions.
+- v2 (2026-07-06): thêm US5 + FR-015/FR-016 + entity Người dùng — danh sách người dùng độc lập là nguồn định danh duy nhất, bước nền tảng thực hiện đầu tiên.
+- v3 (2026-07-09): review (`/speckit-specify review`) — thêm US1 #7 chặn ngày tương lai (khớp FR-005 / UC-TRK-02 E4 / quickstart #9); SC-006 chốt ngưỡng 5 giây (đề xuất, cần nghiệp vụ xác nhận); bỏ tên bảng/cột kỹ thuật khỏi Key Entities; thống nhất ngôn ngữ FR-008/FR-009; bổ sung khối References/Truy vết & History.
+- v4 (2026-07-10): re-platform Go+Vue — generalize các mô tả dính cơ chế stack cũ (đối chiếu phiên qua email, nơi lưu thông tin xác thực, backfill hồ sơ từ hệ xác thực cũ) thành trung lập; phạm vi & FR không đổi.

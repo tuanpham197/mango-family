@@ -4,13 +4,15 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 # Tasks: Ghi Chép Thu Nhập và Chi Phí (Income & Expense Tracking)
 
+> ⚠️ **LEGACY STACK 2026-07-10 — Re-platform Go + Vue**: Các task bên dưới được sinh cho stack Flutter/Supabase đã gỡ bỏ (chưa task nào thực hiện). Phasing theo user story và nội dung nghiệp vụ vẫn đúng, nhưng đường dẫn/công nghệ sẽ được **tái sinh** khi re-plan theo stack mới — xem [design re-platform](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md).
+
 **Input**: Design documents from `/specs/002-transaction-tracking/`
 
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md), [UC-TRK-01…05](../use-cases/002-transaction-tracking/)
 
 **Stack**: Flutter (Dart 3.x) · Riverpod · Supabase (PostgreSQL + Auth + RLS + Realtime). Tái dùng hạ tầng feature 001 (✅ implemented).
 
-**Tests**: Spec không yêu cầu TDD → không sinh phase test riêng. Kiểm chứng end-to-end theo 22 kịch bản trong [quickstart.md](./quickstart.md); unit/widget test bổ sung ở Polish.
+**Tests**: Spec không yêu cầu TDD → không sinh phase test riêng. Kiểm chứng end-to-end theo 23 kịch bản trong [quickstart.md](./quickstart.md); unit/widget test bổ sung ở Polish.
 
 **Path conventions**: module mới `src/lib/features/transactions/{domain,data,presentation}`; hạ tầng chung `src/lib/core/`; migration `src/supabase/migrations/`; script dev `src/supabase/setup_dev.sql`.
 
@@ -72,7 +74,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 - [ ] T016 [P] [US1] Use case `AddTransaction` (validate: amount > 0, mô tả ≤ 255, ngày ≤ hiện tại, category/account bắt buộc) trong `src/lib/features/transactions/domain/usecases/add_transaction.dart`
 - [ ] T017 [US1] Màn `TransactionFormScreen` (chế độ tạo): số tiền, loại Thu/Chi, `CategorySelectField` + `SuggestionChip` tái dùng từ 001, chọn tài khoản (chọn sẵn khi hộ chỉ có 1 — FR-006), date picker giới hạn `lastDate = hôm nay`, mô tả `maxLength: 255` trong `src/lib/features/transactions/presentation/screens/transaction_form_screen.dart`
-- [ ] T018 [US1] Controller form (submit qua `AddTransaction`, hiển thị lỗi theo trường, làm tươi ledger/số dư sau lưu) trong `src/lib/features/transactions/presentation/controllers/transaction_form_controller.dart`
+- [ ] T018 [US1] Controller form (submit qua `AddTransaction`, hiển thị lỗi theo trường, làm tươi ledger/số dư sau lưu; chống double-submit — thử lại sau mất kết nối không tạo bản ghi trùng, quickstart #23) trong `src/lib/features/transactions/presentation/controllers/transaction_form_controller.dart`
 - [ ] T019 [US1] Widget hiển thị số dư tài khoản (từ `account_balances`) trong `src/lib/features/transactions/presentation/widgets/account_balance_chip.dart`
 - [ ] T020 [US1] Thay màn nhập tối thiểu của 001: xóa `src/lib/features/categorization/presentation/screens/transaction_entry_screen.dart`, route `/txn` cũ trỏ về `/txn/new` mới trong `src/lib/core/router/app_router.dart`
 
@@ -127,7 +129,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 **Purpose**: Test tự động, kiểm chứng end-to-end, đồng bộ tài liệu.
 
 - [ ] T030 [P] Unit test (validate AddTransaction/UpdateTransaction: amount/mô tả/ngày; phân biệt conflict) trong `src/test/unit/transactions_domain_test.dart` + widget test (form chặn lưu khi thiếu danh mục/tài khoản; ledger hiển thị tên người nhập) trong `src/test/widget_test.dart`
-- [ ] T031 Chạy kiểm chứng `quickstart.md` (22 kịch bản — UI Chrome + API e2e đa thành viên #11/#13/#16–#18/#21 với Alice/Bob/Carol như cách feature 001; đối chiếu số dư #22 bằng truy vấn `account_balances`)
+- [ ] T031 Chạy kiểm chứng `quickstart.md` (23 kịch bản — UI Chrome + API e2e đa thành viên #11/#13/#16–#18/#21 với Alice/Bob/Carol như cách feature 001; đối chiếu số dư #22 bằng truy vấn `account_balances`; #23 kiểm chống trùng khi thử lại)
 - [ ] T032 [P] Cập nhật tài liệu & khối References/History các artifact theo quy tắc lan truyền `CLAUDE.md` (BR-002 → implemented nếu đủ; entity-model/data-model nếu lệch; chạy `/speckit-analyze`)
 
 ---
@@ -180,7 +182,7 @@ Task: "T013 routes in src/lib/core/router/app_router.dart"
 
 ### Incremental Delivery
 
-US5 (định danh) → US1 (nhập — MVP) → US2 (sổ chung + realtime) → US3 (sửa + concurrency) → US4 (xóa) → Polish (test + e2e 22 kịch bản + docs). Mỗi story kiểm chứng độc lập theo nhóm kịch bản quickstart của nó trước khi sang story sau.
+US5 (định danh) → US1 (nhập — MVP) → US2 (sổ chung + realtime) → US3 (sửa + concurrency) → US4 (xóa) → Polish (test + e2e 23 kịch bản + docs). Mỗi story kiểm chứng độc lập theo nhóm kịch bản quickstart của nó trước khi sang story sau.
 
 ---
 

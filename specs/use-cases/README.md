@@ -6,7 +6,7 @@
 
 > Mô hình chung (từ 2026-06-29): app dùng chung trong **hộ gia đình** — dữ liệu chia sẻ trong hộ, cô lập giữa các hộ; mọi thành viên **quyền ngang nhau**; bản ghi ghi rõ **người tạo** (từ 2026-07-06 tham chiếu **danh sách người dùng độc lập** — feature 002).
 
-## Feature 001 — Phân Loại Giao Dịch ([spec](../001-transaction-categorization/spec.md) · [BR-001](../business-requirements/BR-001.md) — ✅ implemented)
+## Feature 001 — Phân Loại Giao Dịch ([spec](../001-transaction-categorization/spec.md) · [BR-001](../business-requirements/BR-001.md) — 🔁 re-implementation pending, re-platform Go+Vue 2026-07-10)
 
 | Mã | Use Case | User Story | Truy vết FR (001) | Sơ đồ |
 |----|----------|------------|-------------------|:-----:|

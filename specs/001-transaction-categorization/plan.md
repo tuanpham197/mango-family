@@ -4,6 +4,8 @@
 
 **Input**: Feature specification from `/specs/001-transaction-categorization/spec.md`
 
+> ⚠️ **LEGACY STACK (2026-07-10)**: Plan này mô tả kiến trúc **Flutter + Supabase đã gỡ bỏ** (re-platform Go + Vue — xem [design](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md)). Nghiệp vụ & bất biến vẫn đúng; phần kỹ thuật chờ viết lại bằng `/speckit-plan`.
+
 **User focus**: `@specs/use-cases/001-transaction-categorization/uc-cat-02-tao-danh-muc.md` (Tạo danh mục mới). Kế hoạch bao phủ toàn bộ tính năng (UC-CAT-01…08).
 
 > ⚠️ **Thay đổi phạm vi (2026-06-29)**: App là **dùng chung trong gia đình, nhiều thành viên**. Điều này **đảo ngược FR-018** của spec ("danh mục riêng từng người dùng, không chia sẻ") và mục **Out of Scope của BR-001** ("chia sẻ/đồng bộ giữa nhiều người dùng"). Plan dưới đây đã cập nhật theo mô hình **sổ chung hộ gia đình** với **quyền ngang nhau**. **Spec cần được cập nhật tương ứng** (xem mục "Tác động tới spec" cuối file) — nên chạy `/speckit-clarify` hoặc `/speckit-specify`.

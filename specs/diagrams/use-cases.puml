@@ -2,6 +2,7 @@
 ' Nguồn: specs/use-cases/<feature>/*.md · specs/001-*/spec.md · specs/002-*/spec.md
 ' 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
 ' 2026-07-06: thêm feature 002 (UC-TRK-01..05); người dùng là danh sách độc lập (FR-015/002).
+' 2026-07-10: re-platform Go+Vue — bỏ chú thích RLS (cơ chế stack cũ); 001 → re-implementation pending.
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -17,7 +18,7 @@ rectangle "Feature 002 — Ghi chép thu nhập & chi phí" {
     usecase "UC-TRK-05\nXóa giao dịch (có xác nhận)" as TRK05
 }
 
-rectangle "Feature 001 — Phân loại giao dịch (✅ implemented)" {
+rectangle "Feature 001 — Phân loại giao dịch (re-implementation pending)" {
 
     package "Quản lý danh mục" {
         usecase "UC-CAT-01\nXem & lọc danh mục theo Thu/Chi" as UC01
@@ -92,7 +93,7 @@ end note
 
 note as N1
   Dữ liệu DÙNG CHUNG trong hộ; cô lập giữa các hộ
-  (RLS theo membership). Mọi thành viên quyền
+  (theo tư cách thành viên hộ). Mọi thành viên quyền
   NGANG NHAU; sổ hiển thị TÊN người nhập.
 end note
 N1 .. member

@@ -6,7 +6,7 @@
 - **Liên quan tới BR:** BR-002 (BR-TRK-001…007, BR-TRK-010)
 - **Status:** draft
 - **Owner:** TBD (PO phụ trách phân hệ Giao dịch)
-- **Last updated:** 2026-07-06
+- **Last updated:** 2026-07-09
 
 ## Actor
 - Thành viên hộ gia đình (quyền ngang nhau).
@@ -72,6 +72,10 @@ And: khi chỉnh sang một ngày trong quá khứ, giao dịch ghi theo ngày �
 Given: giao dịch loại Thu
 When: mở danh sách danh mục
 Then: chỉ danh mục loại Thu hiển thị (liên kết BR-001/BR-CAT-008)
+### AC-7: Chặn ngày tương lai
+Given: thành viên chỉnh ngày giờ sang một thời điểm trong tương lai
+When: bấm Lưu
+Then: hệ thống chặn và thông báo không hỗ trợ ngày trong tương lai (E4)
 
 ## Dependencies
 - **Upstream UC:** UC-TRK-01 (đăng nhập/định danh); UC-CAT-07 «include» (gán danh mục); UC-CAT-08 «extend» (gợi ý).
@@ -79,10 +83,11 @@ Then: chỉ danh mục loại Thu hiển thị (liên kết BR-001/BR-CAT-008)
 - **External Systems:** Không.
 
 ## Notes
-- Truy vết: **FR** FR-001…FR-007, FR-011…FR-013 ([spec 002](../../002-transaction-tracking/spec.md)) · **Acceptance** US1 #1–#6 · **SC** SC-001…SC-004, SC-006.
+- Truy vết: **FR** FR-001…FR-007, FR-011…FR-013 ([spec 002](../../002-transaction-tracking/spec.md)) · **Acceptance** US1 #1–#7 · **SC** SC-001…SC-004, SC-006.
 - Tài khoản là phụ thuộc BR-005 (chưa triển khai) — hộ có tài khoản mặc định; số dư là giá trị suy ra nhất quán (Assumptions spec 002).
 - Mục tiêu hiệu năng: nhập xong ≤ 15 giây (SC-001).
 
 ## History
 - v1 (2026-07-06, claude): initial từ US1 của spec 002.
 - v2 (2026-07-06, claude): chuyển sang cấu trúc `specs/use-cases/template.md`; tách Exceptions khỏi Alternative Flows.
+- v3 (2026-07-09, claude): thêm AC-7 (chặn ngày tương lai) khớp US1 #7 của spec 002 v3; cập nhật truy vết.

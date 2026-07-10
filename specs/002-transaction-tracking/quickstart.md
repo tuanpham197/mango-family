@@ -1,6 +1,6 @@
 # Quickstart — Validate Income & Expense Tracking (feature 002)
 
-**Date**: 2026-07-06 · **Plan**: [plan.md](./plan.md) · **Contracts**: [contracts/](./contracts/) ·
+**Date**: 2026-07-06 (updated 2026-07-09) · **Plan**: [plan.md](./plan.md) · **Contracts**: [contracts/](./contracts/) ·
 **Data model**: [data-model.md](./data-model.md)
 
 Hướng dẫn chạy & kiểm chứng tính năng end-to-end. Không chứa code cài đặt.
@@ -48,6 +48,7 @@ flutter run -d chrome --dart-define-from-file=.env.json
 | 20 | Hủy xóa | Hủy tại dialog | Không gì thay đổi | UC-TRK-05 AC-2 |
 | 21 | Xóa xong số dư hoàn tác | Xác nhận xóa giao dịch Chi 50.000 | Biến mất khỏi sổ mọi thành viên; số dư +50.000 | UC-TRK-05 AC-3/AC-4 |
 | 22 | Số dư luôn khớp (đối chiếu) | Sau chuỗi thêm/sửa/xóa bất kỳ | `account_balances` = initial + tổng bút toán (truy vấn đối chiếu) | SC-004, R16 |
+| 23 | Mất kết nối khi lưu — không trùng | Ngắt mạng → Lưu (lỗi) → bật mạng → thử lại Lưu | Thông báo lỗi rõ ràng khi mất kết nối; sau thử lại chỉ có **một** giao dịch được tạo | UC-TRK-02 E5, Edge case spec |
 
 ## Chạy test
 
@@ -56,5 +57,5 @@ cd src
 flutter test          # unit (validate/usecase) + widget (form chặn lưu, sổ hiển thị tên)
 ```
 
-**Done khi**: 22/22 kịch bản pass (đa thành viên #11, #13, #16–#18, #21 kiểm bằng 2 phiên
+**Done khi**: 23/23 kịch bản pass (đa thành viên #11, #13, #16–#18, #21 kiểm bằng 2 phiên
 Alice/Bob + Carol như cách e2e của feature 001) và `flutter test` xanh.

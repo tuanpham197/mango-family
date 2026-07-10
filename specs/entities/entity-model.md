@@ -4,7 +4,7 @@
 
 > **Cập nhật 2026-06-29 — App dùng chung trong hộ gia đình**: Danh mục/giao dịch/quy tắc thuộc một **hộ** (`household_id`) thay vì người dùng; thêm `HOUSEHOLD` + `HOUSEHOLD_MEMBER`; giao dịch ghi rõ thành viên nhập (`created_by`). Cô lập **giữa các hộ**; chia sẻ **trong hộ** (FR-018 đã đổi). Mọi thành viên quyền ngang nhau.
 >
-> **Cập nhật 2026-07-06 — Feature 002 (Ghi chép thu chi)**: `USER` là **danh bạ độc lập** (nguồn định danh duy nhất, phiên đăng nhập đối chiếu qua email — FR-015/002); thêm `ACCOUNT` (nguồn tiền của hộ — phụ thuộc BR-005, phạm vi 002 dùng tài khoản mặc định); `TRANSACTION` mở rộng vòng đời nhập/sửa/xóa với `account_id` + `updated_at` (chống ghi đè thầm lặng — FR-014/002).
+> **Cập nhật 2026-07-06 — Feature 002 (Ghi chép thu chi)**: `USER` là **danh bạ độc lập** (nguồn định danh duy nhất — FR-015/002); thêm `ACCOUNT` (nguồn tiền của hộ — phụ thuộc BR-005, phạm vi 002 dùng tài khoản mặc định); `TRANSACTION` mở rộng vòng đời nhập/sửa/xóa với `account_id` + `updated_at` (chống ghi đè thầm lặng — FR-014/002).
 
 ## Entity Relationship Diagram
 
@@ -53,10 +53,10 @@ Danh bạ người dùng **độc lập** của hệ thống — nguồn định
 | Attribute    | Description                          | Data Type | Length/Precision | Validation Rules               |
 |--------------|--------------------------------------|-----------|------------------|--------------------------------|
 | id           | Định danh duy nhất của người dùng (độc lập, không phụ thuộc cơ chế xác thực) | Long | 19 | Primary Key, Sequence |
-| email        | Email — danh tính đăng nhập, dùng đối chiếu phiên | String | 255 | Not Null, Unique, Format: Email |
+| email        | Email — danh tính đăng nhập, duy nhất trong hệ thống | String | 255 | Not Null, Unique, Format: Email |
 | display_name | Tên hiển thị (hiện trong sổ chung thay cho mã định danh) | String | 100 | Not Null |
 
-**Constraints:** Bảng độc lập cấu trúc với cơ chế xác thực — mật khẩu/phiên do hệ thống đăng nhập quản lý riêng; phiên đăng nhập đối chiếu với hồ sơ **qua email** (FR-015, FR-016/002). Tài khoản đăng nhập hiện có được backfill hồ sơ tự động; chưa có tên hiển thị thì dùng email. Mỗi người chỉ tự sửa hồ sơ của chính mình; thành viên cùng hộ thấy được tên nhau.
+**Constraints:** Nguồn định danh duy nhất của hệ thống — mọi FK "người" (thành viên hộ, người tạo) tham chiếu về đây; thông tin xác thực (mật khẩu/phiên) được quản lý an toàn ở tầng hiện thực, không thuộc ý nghĩa nghiệp vụ của thực thể (FR-015, FR-016/002). Hồ sơ chưa có tên hiển thị thì dùng email. Mỗi người chỉ tự sửa hồ sơ của chính mình; thành viên cùng hộ thấy được tên nhau.
 
 ### CATEGORY
 
@@ -129,3 +129,4 @@ Một bút toán Thu hoặc Chi dùng chung trong hộ; tham chiếu đúng mộ
 - 2026-07-06: Thêm `CATEGORY.updated_at` (mốc cập nhật lạc quan đa thành viên — R13/T050); đồng bộ với `data-model.md` và `contracts/db-schema.sql`.
 - 2026-07-06 (feature 002): `USER` được hiện thực hóa thành bảng người dùng **độc lập** của app (định danh riêng; email duy nhất; tên hiển thị; phiên đăng nhập nối qua email — credentials do hệ thống xác thực quản lý riêng); mọi FK người dùng (thành viên hộ, người tạo) tham chiếu bảng này (migration `0011_users.sql`).
 - 2026-07-06 (feature 002 — entity model từ UC-TRK-01…05 + BR-002): tổng quát hóa tiêu đề (001+002); cập nhật bảng thuộc tính `USER` (email unique, `display_name`, constraints độc lập/đối chiếu qua email); thêm thực thể **`ACCOUNT`** (nguồn tiền của hộ — BR-005, phạm vi 002 dùng tài khoản mặc định, `balance` là giá trị suy ra); `TRANSACTION` thêm `account_id` + `updated_at` và constraints vòng đời nhập/sửa/xóa (ngày không tương lai, xác nhận khi xóa, chống ghi đè thầm lặng — FR-005/009/010/014 của spec 002).
+- 2026-07-10 (re-platform Go+Vue): gỡ mô tả cơ chế của stack cũ khỏi `USER` (đối chiếu phiên qua email, backfill hồ sơ từ hệ xác thực cũ) — thông tin xác thực là chi tiết tầng hiện thực; **cấu trúc thực thể & quan hệ KHÔNG đổi**. Các đường dẫn migration trong dòng history cũ là di sản (`src/supabase/migrations/...` → nay `src/db/migrations/` với goose).

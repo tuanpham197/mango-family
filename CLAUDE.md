@@ -28,21 +28,29 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 - Chạy `/speckit-analyze` để phát hiện lệch nhau giữa spec ↔ plan ↔ tasks sau khi cập nhật.
 
 <!-- SPECKIT START -->
-For technologies, project structure, and other important context, read the current plan:
-`specs/002-transaction-tracking/plan.md`
+For technologies and project structure, read the re-platform design (authoritative for the stack):
+`docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md`
 
-Active feature: **002-transaction-tracking** (Ghi chép thu nhập & chi phí). Feature
-**001-transaction-categorization** is ✅ implemented & verified (see its spec dir).
-Model: **shared family household** — multiple members, EQUAL permissions; data shared per
-`household_id` (RLS by membership, isolated across households). **Users are an INDEPENDENT
-directory** (`public.users`, own PK, no FK to auth): login sessions map to users **via email**
-(`current_user_id()`); `created_by` is set by DB trigger and references `users.id`.
-Foundational order for 002: **users FIRST** (migration `0011_users.sql`, written) → accounts
-(`0012`, default "Tiền mặt" per household; balance = derived view `account_balances`) →
-transactions v2 (`0013`: `account_id`, `updated_at`, no future dates).
-Stack: Flutter (Dart 3.x, iOS+Android+Web) · Riverpod · Supabase (PostgreSQL + Auth + RLS + Realtime).
-Source lives under **`src/`** (Flutter project root = `src/`): feature modules
-`src/lib/features/{categorization,transactions}`; shared context in `src/lib/core/{auth,household,supabase}`;
-migrations in `src/supabase/migrations`; dev DB one-paste script `src/supabase/setup_dev.sql`.
-Design artifacts: research.md · data-model.md · contracts/ · quickstart.md in the same spec dir.
+> ⚠️ **Re-platform (2026-07-09/10)**: Flutter + Supabase have been REMOVED (code in `src/` deleted;
+> recoverable via git history). New stack: **Go API (Gin + GORM + WebSocket, migrations via goose)
+> + Vue 3 (Vite/TS/Pinia) + self-managed PostgreSQL**; responsive web, mobile-first. Go API layout
+> follows `github.com/tuanpham197/learn_go` (module-first `model/biz/storage/transport`); e2e =
+> Playwright. Source will live at `src/api` (Go) · `src/web` (Vue) · `src/db/migrations` (goose) —
+> not yet scaffolded.
+
+Feature status:
+- **001-transaction-categorization**: 🔁 re-implementation pending (was implemented & verified on
+  the old stack; code removed). Spec/BR/use cases unchanged; plan/design artifacts + tasks await
+  rewrite via `/speckit-plan` + `/speckit-tasks`.
+- **002-transaction-tracking**: spec v4 complete; its design artifacts describe the legacy stack —
+  await rewrite (see banners in each file).
+- **003-budgeting**: spec v1 complete (tech-agnostic), awaiting plan.
+
+Model (unchanged): **shared family household** — multiple members, EQUAL permissions; data shared
+per `household_id`, isolated across households. **Users are an INDEPENDENT directory** — the single
+identity source referenced by household membership and every `created_by`; household-membership
+authorization is enforced in the API layer (replaces the old RLS). Foundational order for 002:
+**users FIRST** → accounts (default "Tiền mặt" per household; balance = derived view
+`account_balances`) → transactions (`account_id`, `updated_at`, no future dates).
+Design artifacts: research.md · data-model.md · contracts/ · quickstart.md in each feature's spec dir.
 <!-- SPECKIT END -->

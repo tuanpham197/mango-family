@@ -5,5 +5,7 @@
   "here": true,
   "integration": "claude",
   "script": "sh",
-  "speckit_version": "0.9.4"
+  "speckit_version": "0.9.4",
+  "db_postgresql": "primary",
+  "vector_search": "pg_vector"
 }

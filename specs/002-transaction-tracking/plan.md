@@ -4,6 +4,8 @@
 
 **Input**: Feature specification from `/specs/002-transaction-tracking/spec.md` · [BR-002](../business-requirements/BR-002.md) · [UC-TRK-01…05](../use-cases/002-transaction-tracking/) · [Entity model](../entities/entity-model.md)
 
+> ⚠️ **LEGACY STACK (2026-07-10)**: Plan này mô tả kiến trúc **Flutter + Supabase đã gỡ bỏ** (re-platform Go + Vue — xem [design](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md)). Nghiệp vụ & bất biến vẫn đúng; phần kỹ thuật chờ viết lại bằng `/speckit-plan`.
+
 ## Summary
 
 Cho phép thành viên hộ **nhập / xem / sửa / xóa giao dịch thu-chi** trong sổ chung của hộ:
@@ -35,7 +37,7 @@ Architecture, RLS theo membership, realtime, cập nhật lạc quan R13). Thêm
 
 **Project Type**: Mobile app (Flutter) + BaaS, multi-user chia sẻ theo hộ gia đình
 
-**Performance Goals**: Nhập giao dịch ≤ 15s (SC-001); ≥ 95% lượt lưu hợp lệ ngay lần đầu (SC-002); sổ hiển thị thay đổi của thành viên khác trong vài giây (SC-006); danh sách mượt với hàng nghìn giao dịch (phân trang)
+**Performance Goals**: Nhập giao dịch ≤ 15s (SC-001); ≥ 95% lượt lưu hợp lệ ngay lần đầu (SC-002); sổ hiển thị thay đổi của thành viên khác trong ≤ 5 giây (SC-006); danh sách mượt với hàng nghìn giao dịch (phân trang)
 
 **Constraints**: Số dư = giá trị suy ra, 100% khớp tổng bút toán (SC-004); không ngày tương lai (FR-005); xóa luôn có xác nhận (SC-005); không ghi đè thầm lặng (SC-007 — mốc `updated_at`); một loại tiền tệ; audit log chi tiết ngoài phạm vi
 
@@ -75,7 +77,7 @@ src/
 │   │   ├── auth/                 # login_screen (đã có từ 001) + current_user provider (MỚI: users.id qua email)
 │   │   ├── household/            # current_household (đã đổi sang tra users theo email)
 │   │   ├── supabase/             # client + realtime (đã có; transactions đã được subscribe)
-│   │   ├── router/               # thêm routes /ledger, /txn/:id/edit
+│   │   ├── router/               # thêm routes /ledger, /txn/new, /txn/edit
 │   │   └── error/                # thêm Failure: AccountRequired, FutureDateNotAllowed, DescriptionTooLong
 │   └── features/
 │       ├── categorization/       # (feature 001 — giữ nguyên; TransactionEntryScreen tối thiểu sẽ được

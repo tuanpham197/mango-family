@@ -6,7 +6,7 @@
 - **Liên quan tới BR:** BR-002 (Goal); liên kết BR-CAT-009 (hiển thị người nhập)
 - **Status:** draft
 - **Owner:** TBD (PO phụ trách phân hệ Giao dịch)
-- **Last updated:** 2026-07-06
+- **Last updated:** 2026-07-09
 
 ## Actor
 - Thành viên hộ gia đình (quyền ngang nhau).
@@ -21,7 +21,7 @@
 1. Thành viên mở sổ giao dịch.
 2. Hệ thống liệt kê các giao dịch **của hộ mình** (và chỉ của hộ mình), sắp xếp theo ngày giờ **mới nhất trước**.
 3. Hệ thống hiển thị trên mỗi dòng: số tiền, loại Thu/Chi, danh mục, ngày giờ và **tên thành viên đã nhập** (tên hiển thị dễ đọc).
-4. Khi một thành viên khác thêm/sửa/xóa giao dịch, hệ thống làm tươi sổ của thành viên đang xem trong vòng vài giây.
+4. Khi một thành viên khác thêm/sửa/xóa giao dịch, hệ thống làm tươi sổ của thành viên đang xem trong vòng 5 giây (SC-006).
 5. Thành viên chọn một giao dịch để xem chi tiết, chỉnh sửa (UC-TRK-04) hoặc xóa (UC-TRK-05) — mục tiêu (sổ chung minh bạch làm điểm vào thao tác) đạt được.
 
 ## Alternative Flows
@@ -61,3 +61,4 @@ Then: Carol không thấy bất kỳ giao dịch nào của hộ A
 ## History
 - v1 (2026-07-06, claude): initial từ US2 của spec 002.
 - v2 (2026-07-06, claude): chuyển sang cấu trúc `specs/use-cases/template.md`.
+- v3 (2026-07-09, claude): chốt ngưỡng làm tươi sổ ≤ 5 giây theo SC-006 (spec 002 v3).

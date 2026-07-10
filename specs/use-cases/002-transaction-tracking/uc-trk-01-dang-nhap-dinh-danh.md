@@ -6,7 +6,7 @@
 - **Liên quan tới BR:** BR-002 (tiền đề mọi thao tác); liên kết BR-CAT-009 (ghi người nhập)
 - **Status:** draft
 - **Owner:** TBD (PO phụ trách phân hệ Giao dịch)
-- **Last updated:** 2026-07-06
+- **Last updated:** 2026-07-10
 
 ## Actor
 - Người dùng đã có tài khoản (trước khi được định danh là thành viên hộ).
@@ -62,13 +62,14 @@ Then: sổ của mọi thành viên hiển thị giao dịch với người nh�
 ## Dependencies
 - **Upstream UC:** UC-HH-* (Quản lý hộ — người dùng phải đã là thành viên một hộ; feature riêng, chưa có BR).
 - **Downstream UC:** UC-TRK-02…05 và toàn bộ UC-CAT-01…08 (mọi use case đều yêu cầu phiên đăng nhập + định danh).
-- **External Systems:** Dịch vụ xác thực (quản lý mật khẩu/phiên — ngoài phạm vi thực thể Người dùng).
+- **External Systems:** Không — xác thực (mật khẩu/phiên) là chức năng của hệ thống; chi tiết quản lý không thuộc ý nghĩa nghiệp vụ của thực thể Người dùng.
 
 ## Notes
-- Danh sách người dùng là **nguồn định danh duy nhất** (FR-015): thành viên hộ và mọi trường "người nhập/người tạo" tham chiếu về đây; bảng người dùng **độc lập** với cơ chế xác thực, đối chiếu phiên qua email (quyết định 2026-07-06).
+- Danh sách người dùng là **nguồn định danh duy nhất** (FR-015): thành viên hộ và mọi trường "người nhập/người tạo" tham chiếu về đây. Cách nối phiên đăng nhập với hồ sơ người dùng là **chi tiết hiện thực** (đã đổi theo re-platform 2026-07-10; trước đây đối chiếu qua email trên stack cũ).
 - Truy vết: **FR** FR-015, FR-016 ([spec 002](../../002-transaction-tracking/spec.md)) · **Acceptance** US5 #1–#4 · **SC** SC-006 (gián tiếp).
 - Vòng đời tài khoản đầy đủ (tự đăng ký, quên mật khẩu, đổi email) ngoài phạm vi — BR riêng.
 
 ## History
 - v1 (2026-07-06, claude): initial từ US5 của spec 002.
 - v2 (2026-07-06, claude): chuyển sang cấu trúc `specs/use-cases/template.md` (Metadata/Exceptions/AC/Dependencies/History).
+- v3 (2026-07-10, claude): re-platform Go+Vue — gỡ mô tả cơ chế đối chiếu email (chi tiết hiện thực của stack cũ) khỏi Notes/External Systems; nghiệp vụ không đổi.
