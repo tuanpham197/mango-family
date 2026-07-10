@@ -1,99 +1,88 @@
 ---
-description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia đình)"
+description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-implementation)"
 ---
 
-# Tasks: Ghi Chép Thu Nhập và Chi Phí (Income & Expense Tracking)
+# Tasks: Ghi Chép Thu Nhập và Chi Phí (Income & Expense Tracking) — Go + Vue
 
-> ⚠️ **LEGACY STACK 2026-07-10 — Re-platform Go + Vue**: Các task bên dưới được sinh cho stack Flutter/Supabase đã gỡ bỏ (chưa task nào thực hiện). Phasing theo user story và nội dung nghiệp vụ vẫn đúng, nhưng đường dẫn/công nghệ sẽ được **tái sinh** khi re-plan theo stack mới — xem [design re-platform](../../docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md).
+**Input**: Design documents from `/specs/002-transaction-tracking/` (re-plan 2026-07-10)
 
-**Input**: Design documents from `/specs/002-transaction-tracking/`
+**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md) (v4), [research.md](./research.md) (D13–D19), [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md) · **Nền tảng**: [feature 001 (Go+Vue)](../001-transaction-categorization/tasks.md) — tối thiểu T001–T019 của 001 phải xong
 
-**Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md), [UC-TRK-01…05](../use-cases/002-transaction-tracking/)
+**Stack**: Go 1.22+ (Gin + GORM + goose + gorilla/websocket) · Vue 3 (Vite/TS/Pinia) · PostgreSQL 16 · Playwright — như 001, không dependency mới.
 
-**Stack**: Flutter (Dart 3.x) · Riverpod · Supabase (PostgreSQL + Auth + RLS + Realtime). Tái dùng hạ tầng feature 001 (✅ implemented).
+**Tests**: Spec không yêu cầu TDD → không sinh phase test riêng; kiểm chứng end-to-end theo 23 kịch bản [quickstart.md](./quickstart.md); test các tầng ở Polish.
 
-**Tests**: Spec không yêu cầu TDD → không sinh phase test riêng. Kiểm chứng end-to-end theo 23 kịch bản trong [quickstart.md](./quickstart.md); unit/widget test bổ sung ở Polish.
+**Path conventions**: như 001 — API `src/api/module/<x>/{model,biz,storage,transport}`; web `src/web/src/`; migrations `src/db/migrations/` (goose); e2e `src/web/e2e/`.
 
-**Path conventions**: module mới `src/lib/features/transactions/{domain,data,presentation}`; hạ tầng chung `src/lib/core/`; migration `src/supabase/migrations/`; script dev `src/supabase/setup_dev.sql`.
-
-> **Thứ tự nền tảng (yêu cầu 2026-07-06)**: **NGƯỜI DÙNG ĐẦU TIÊN** — bảng `users` độc lập (migration `0011_users.sql` đã viết) phải áp & kiểm trước, rồi mới đến tài khoản (0012) và giao dịch (0013). US5 (đăng nhập/định danh) là story nền tảng, thực hiện trước US1–US4.
+> ♻️ **Tái sinh 2026-07-10**: thay danh sách task Flutter cũ (T001–T032 — xem git history). US5 (đăng nhập/định danh) đã được **feature 001 dựng** (D19) — ở đây chỉ kiểm chứng lại.
 
 ---
 
-## Phase 1: Setup (Shared Infrastructure)
+## Phase 1: Setup
 
-**Purpose**: Khung module transactions + tiện ích chung.
+**Purpose**: Mã lỗi mới + khung module account.
 
-- [ ] T001 Tạo cấu trúc module theo plan.md: `src/lib/features/transactions/{domain/{entities,repositories,usecases},data/{models,datasources,repositories},presentation/{screens,widgets,controllers}}/` và thêm dependency `intl` vào `src/pubspec.yaml`
-- [ ] T002 [P] Bổ sung Failure mới (`NotAuthenticated`, `AccountRequired`, `FutureDateNotAllowed`, `DescriptionTooLong`, `RecordGone`, `AmountInvalid`) trong `src/lib/core/error/failures.dart`
+- [ ] T001 Bổ sung mã lỗi 002 vào `src/api/common/const.go`: `ACCOUNT_REQUIRED`, `ACCOUNT_HOUSEHOLD_MISMATCH`, `FUTURE_DATE_NOT_ALLOWED` (bộ lỗi chung CONCURRENCY_CONFLICT/RECORD_GONE đã có từ 001)
+- [ ] T002 [P] Scaffold `src/api/module/account/{model,storage,biz,transport/ginaccount}/` (khung theo mẫu learn_go)
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Users độc lập (ĐẦU TIÊN) → accounts + view số dư → transactions v2 → hạ tầng domain/data dùng chung.
+**Purpose**: Schema accounts + view số dư + transactions v2 + seed mặc định — mọi user story phụ thuộc.
 
-**⚠️ CRITICAL**: Không bắt đầu US nào trước khi phase này xong. Thứ tự migration bắt buộc: **T003 (users/0011) → T005 (0012) → T006 (0013)**.
+**⚠️ CRITICAL**: Không bắt đầu US nào trước khi phase này xong. Thứ tự migration: **T003 (00006) → T004 (00007)**.
 
-- [ ] T003 **Áp & kiểm migration `0011_users.sql` (users ĐỘC LẬP — đã viết)**: dán `src/supabase/setup_dev.sql` (refresh) vào Supabase SQL Editor; verify qua API: `public.users` = 3, `users.id ≠` id đăng nhập, FK `household_members.user_id`/`*.created_by` → `users(id)`, `current_user_id()` hoạt động *(tiền đề bắt buộc — mọi task sau phụ thuộc)*
-- [ ] T004 Provider "người dùng hiện tại" (`users.id` + `displayName`, đối chiếu email; tự tạo hồ sơ nếu thiếu — UC-TRK-01 5a) trong `src/lib/core/auth/current_user.dart` (contracts §CurrentUser)
-- [ ] T005 Migration: bảng `accounts` + RLS `member_accounts` + trigger `set_created_by` + trigger/backfill **tài khoản mặc định "Tiền mặt"** + view **`account_balances`** (security_invoker) trong `src/supabase/migrations/0012_accounts.sql` (data-model §ACCOUNT, R16, R17)
-- [ ] T006 Migration: `transactions` v2 — thêm `account_id` (backfill về tài khoản mặc định rồi NOT NULL) + `updated_at` + trigger touch + `enforce_txn_rules` mở rộng (account cùng hộ, **chặn ngày tương lai**) trong `src/supabase/migrations/0013_transactions_v2.sql` (data-model §TRANSACTION, R18, R20)
-- [ ] T007 Gộp 0012 + 0013 vào `src/supabase/setup_dev.sql` (idempotent) và dán lại SQL Editor; verify: mỗi hộ có tài khoản "Tiền mặt", `account_balances` trả số dư 0
-- [ ] T008 [P] Domain entities `TransactionEntry`, `Account`, `UserProfile` trong `src/lib/features/transactions/domain/entities/`
-- [ ] T009 Interface `TransactionRepository` + `AccountRepository` (theo `contracts/transaction-repository.md`) trong `src/lib/features/transactions/domain/repositories/`
-- [ ] T010 [P] DTO models + mappers (embed `users(display_name)`, `categories(name,icon)`, `accounts(name)`) trong `src/lib/features/transactions/data/models/transaction_model.dart`
-- [ ] T011 Datasources Supabase: `transaction_remote_datasource.dart` (list embed + insert + update/delete có điều kiện mốc `updated_at` — R20) và `account_remote_datasource.dart` (accounts + `account_balances`) trong `src/lib/features/transactions/data/datasources/` (phụ thuộc T004)
-- [ ] T012 `TransactionRepositoryImpl` + `AccountRepositoryImpl` + providers (ghép datasource + hộ hiện tại + người dùng hiện tại; phân biệt `ConcurrencyConflict` vs `RecordGone`) trong `src/lib/features/transactions/data/repositories/transaction_repository_impl.dart` (phụ thuộc T009, T011)
-- [ ] T013 [P] Router: thêm routes `/ledger`, `/txn/new`, `/txn/edit` trong `src/lib/core/router/app_router.dart`
+- [ ] T003 Goose migration `src/db/migrations/00006_accounts.sql`: bảng `accounts` (CHECK type, index household) + view **`account_balances`** (bọc `-- +goose StatementBegin/End`) theo `contracts/db-schema.sql` (D13, D14)
+- [ ] T004 Goose migration `src/db/migrations/00007_transactions_v2.sql`: `account_id` (nullable → backfill về tài khoản mặc định của hộ → NOT NULL, FK restrict) + `updated_at` + `idx_transactions_account` (D17)
+- [ ] T005 Mở rộng `SeedDefaults` trong `src/api/module/household/biz/seed_defaults.go`: tạo tài khoản mặc định **"Tiền mặt" (CASH)** cùng chỗ seed danh mục (D13); `src/api/cmd/seed/main.go` backfill cho hộ dev
+- [ ] T006 Module account: model GORM (+ model read-only `AccountBalance` map view) trong `src/api/module/account/model/`; storage list theo hộ join balance; biz `ListAccounts`; transport `GET /api/accounts` (contracts §Accounts)
+- [ ] T007 Mở rộng transaction model `src/api/module/transaction/model/transaction.go`: `account_id`, `updated_at` (GORM hook làm mới khi update — D17); embed thêm `account_name` trong response
+- [ ] T008 [P] Web: store `src/web/src/stores/accounts.ts` + component `src/web/src/components/AccountBalanceChip.vue` (hiển thị số dư từ GET /api/accounts)
+- [ ] T009 Subscriber `src/api/component/subscriber/`: mọi mutation transaction publish thêm `accounts_changed` (số dư đổi theo — contracts §WebSocket); web `useInvalidation` refetch accounts store
 
-**Checkpoint**: users/accounts/transactions v2 sẵn sàng trên DB; repo + provider ghép xong → bắt đầu các story.
+**Checkpoint**: goose up + seed xong — mỗi hộ có "Tiền mặt", `GET /api/accounts` trả balance 0.
 
 ---
 
-## Phase 3: User Story 5 - Đăng nhập và định danh người dùng (Priority: P1 — nền tảng, ĐẦU TIÊN) 🎯
+## Phase 3: User Story 5 - Đăng nhập và định danh người dùng (Priority: P1 — nền tảng, đã dựng ở 001) 🎯
 
-**Goal**: Đăng nhập bằng tài khoản của mình; hệ thống biết "tôi là ai" (tên hiển thị) và "tôi thuộc hộ nào"; bản ghi mới ghi đúng người tạo. (UC-TRK-01)
+**Goal**: Xác nhận nền tảng định danh của 001 phủ đúng US5/FR-015/FR-016 của spec 002. (UC-TRK-01, D19)
 
-**Independent Test**: quickstart kịch bản #1–#3 (đăng nhập đúng hộ + đúng tên; chặn khi chưa đăng nhập; sai mật khẩu bị từ chối an toàn).
+**Independent Test**: quickstart #1–#3.
 
-> Màn đăng nhập + guard router đã có từ 001; story này hoàn thiện phần **định danh hồ sơ**.
+- [ ] T010 [US5] Kiểm chứng nền tảng định danh trên luồng 002: Playwright specs `src/web/e2e/auth.spec.ts` (đăng nhập đúng hộ + đúng tên; guard chưa đăng nhập; sai mật khẩu an toàn — quickstart #1–#3); sửa các phát sinh nhỏ nếu có trong `src/api/module/user/` / `src/web/src/stores/auth.ts`
 
-- [ ] T014 [US5] Hiển thị tên người dùng hiện tại (từ `currentUserProvider`) + nút đăng xuất trên app bar các màn chính trong `src/lib/features/transactions/presentation/widgets/current_user_badge.dart` (dùng ở ledger/manage)
-- [ ] T015 [US5] Kiểm chứng luồng định danh: đăng nhập lần đầu tự tạo hồ sơ nếu thiếu (UC-TRK-01 5a); chưa thuộc hộ → thông báo rõ (E2) — hoàn thiện trong `src/lib/core/auth/current_user.dart` + `src/lib/core/household/current_household.dart`
-
-**Checkpoint**: US5 pass quickstart #1–#3 — nền tảng định danh sẵn sàng cho mọi story.
+**Checkpoint**: US5 pass #1–#3 — không cần code mới nếu 001 đã chuẩn.
 
 ---
 
 ## Phase 4: User Story 1 - Nhập giao dịch thu/chi nhanh và hợp lệ (Priority: P1) 🎯 MVP
 
-**Goal**: Nhập giao dịch ≤ 15s với xác thực đầy đủ; số dư tài khoản cập nhật đúng. (UC-TRK-02)
+**Goal**: Nhập ≤ 15s với xác thực đầy đủ (thêm tài khoản + chặn ngày tương lai so với 001); số dư cập nhật đúng. (UC-TRK-02)
 
-**Independent Test**: quickstart kịch bản #4–#10 (nhập hợp lệ + số dư; chặn số tiền/danh mục/mô tả/ngày tương lai; ngày mặc định; lọc danh mục theo loại).
+**Independent Test**: quickstart #4–#10, #23.
 
-- [ ] T016 [P] [US1] Use case `AddTransaction` (validate: amount > 0, mô tả ≤ 255, ngày ≤ hiện tại, category/account bắt buộc) trong `src/lib/features/transactions/domain/usecases/add_transaction.dart`
-- [ ] T017 [US1] Màn `TransactionFormScreen` (chế độ tạo): số tiền, loại Thu/Chi, `CategorySelectField` + `SuggestionChip` tái dùng từ 001, chọn tài khoản (chọn sẵn khi hộ chỉ có 1 — FR-006), date picker giới hạn `lastDate = hôm nay`, mô tả `maxLength: 255` trong `src/lib/features/transactions/presentation/screens/transaction_form_screen.dart`
-- [ ] T018 [US1] Controller form (submit qua `AddTransaction`, hiển thị lỗi theo trường, làm tươi ledger/số dư sau lưu; chống double-submit — thử lại sau mất kết nối không tạo bản ghi trùng, quickstart #23) trong `src/lib/features/transactions/presentation/controllers/transaction_form_controller.dart`
-- [ ] T019 [US1] Widget hiển thị số dư tài khoản (từ `account_balances`) trong `src/lib/features/transactions/presentation/widgets/account_balance_chip.dart`
-- [ ] T020 [US1] Thay màn nhập tối thiểu của 001: xóa `src/lib/features/categorization/presentation/screens/transaction_entry_screen.dart`, route `/txn` cũ trỏ về `/txn/new` mới trong `src/lib/core/router/app_router.dart`
+- [ ] T011 [P] [US1] Mở rộng biz `src/api/module/transaction/biz/create_transaction.go`: `account_id` bắt buộc + cùng hộ (ACCOUNT_REQUIRED/ACCOUNT_HOUSEHOLD_MISMATCH); chặn `transaction_date > now()+1d` (FUTURE_DATE_NOT_ALLOWED — D15); giữ nguyên validate 001 (amount/category/description)
+- [ ] T012 [US1] Transport POST cập nhật body theo `contracts/transaction-api.md`; publish `transactions_changed` + `accounts_changed` (phụ thuộc T009, T011)
+- [ ] T013 [US1] Web: `src/web/src/views/TransactionFormView.vue` (chế độ TẠO) — số tiền, loại Thu/Chi, `CategoryPicker` + `SuggestionChip` tái dùng từ 001, chọn tài khoản (chọn sẵn khi hộ chỉ có 1 — FR-006), date picker `max = hôm nay`, mô tả `maxlength=255`, lỗi theo trường; **thay** TransactionEntryView tối thiểu của 001 (route cũ trỏ về form mới)
+- [ ] T014 [US1] Store `src/web/src/stores/transactions.ts`: submit + refetch sổ/balances sau lưu; **chống double-submit** (disable khi pending; thử lại sau lỗi mạng không tạo trùng — quickstart #23)
 
-**Checkpoint**: US5 + US1 = MVP demo được (đăng nhập → nhập giao dịch hợp lệ → số dư đúng).
+**Checkpoint**: US5 + US1 = MVP (đăng nhập → nhập giao dịch hợp lệ → số dư đúng).
 
 ---
 
 ## Phase 5: User Story 2 - Xem sổ giao dịch chung của hộ (Priority: P2)
 
-**Goal**: Sổ chung mới-nhất-trước, hiển thị **tên** người nhập; realtime giữa thành viên; điểm vào sửa/xóa. (UC-TRK-03)
+**Goal**: Sổ mới-nhất-trước hiển thị TÊN người nhập; realtime ≤ 5s; điểm vào sửa/xóa. (UC-TRK-03)
 
-**Independent Test**: quickstart kịch bản #11–#13 (Bob thấy giao dịch Alice kèm tên; thứ tự & phân trang; Carol cô lập).
+**Independent Test**: quickstart #11–#13.
 
-- [ ] T021 [P] [US2] Use case `ListTransactions` (phân trang 50/trang) trong `src/lib/features/transactions/domain/usecases/list_transactions.dart`
-- [ ] T022 [US2] Controller sổ (paging + realtime invalidation qua `subscribeHouseholdChanges` đã có) trong `src/lib/features/transactions/presentation/controllers/ledger_controller.dart`
-- [ ] T023 [US2] Màn `LedgerScreen`: danh sách mới nhất trước, mỗi dòng số tiền/loại/danh mục/ngày/**tên người nhập** (email nếu thiếu tên — UC-TRK-03 3a), infinite scroll, empty state hướng đi nhập trong `src/lib/features/transactions/presentation/screens/ledger_screen.dart`
-- [ ] T024 [US2] Đặt Ledger làm màn hình chính `/`: điều hướng sang Quản lý danh mục + Nhập giao dịch từ app bar trong `src/lib/core/router/app_router.dart`
+- [ ] T015 [P] [US2] Mở rộng storage/biz list `src/api/module/transaction/storage/list.go`: embed `users(display_name)` + `categories(name,icon)` + `accounts(name)` một round-trip; `ORDER BY transaction_date DESC, id DESC`; paging offset 50 + total (D16)
+- [ ] T016 [US2] Web: nâng cấp `src/web/src/views/LedgerView.vue` thành sổ chính thức — infinite scroll, mỗi dòng số tiền/loại/danh mục/ngày/**tên người nhập** (email nếu thiếu tên), empty state hướng đi nhập, realtime refetch qua `useInvalidation` (≤ 5s — SC-006)
+- [ ] T017 [US2] Router `src/web/src/router/index.ts`: Ledger làm màn hình chính `/`; app bar điều hướng Quản lý danh mục + Nhập giao dịch + badge người dùng/đăng xuất
 
-**Checkpoint**: US1 + US2 hoạt động độc lập; sổ chung minh bạch.
+**Checkpoint**: US1 + US2 độc lập; sổ chung minh bạch.
 
 ---
 
@@ -101,13 +90,13 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 **Goal**: Sửa mọi trường với xác thực như nhập mới; đổi loại buộc chọn lại danh mục; số dư tính lại; không ghi đè thầm lặng. (UC-TRK-04)
 
-**Independent Test**: quickstart kịch bản #14–#18 (số dư chênh lệch đúng; đổi loại; ngang quyền; xung đột đồng thời; bị xóa trong lúc sửa).
+**Independent Test**: quickstart #14–#18.
 
-- [ ] T025 [P] [US3] Use case `UpdateTransaction` (validate như nhập mới + mốc `expectedUpdatedAt`) trong `src/lib/features/transactions/domain/usecases/update_transaction.dart`
-- [ ] T026 [US3] Chế độ sửa trong `TransactionFormScreen` (prefill; đổi loại → `CategorySelectField` coi danh mục cũ là chưa chọn; xử lý `ConcurrencyConflict` → tải lại dữ liệu mới, `RecordGone` → thông báo + về sổ) trong `src/lib/features/transactions/presentation/screens/transaction_form_screen.dart`
-- [ ] T027 [US3] Điểm vào sửa từ sổ (tap dòng giao dịch → `/txn/edit`) trong `src/lib/features/transactions/presentation/screens/ledger_screen.dart`
+- [ ] T018 [P] [US3] Biz `src/api/module/transaction/biz/update_transaction.go`: validate như tạo mới + mốc `expected_updated_at` — conditional UPDATE, phân biệt CONCURRENCY_CONFLICT (409, kèm data mới nhất) vs RECORD_GONE (404) (D17); thêm `GET /api/transactions/:id` + `PATCH` trong transport
+- [ ] T019 [US3] Web: `TransactionFormView` chế độ SỬA — prefill qua GET /:id; đổi loại → `CategoryPicker` coi danh mục cũ là "chưa chọn" (D18); xử lý CONCURRENCY_CONFLICT (hiện dữ liệu mới, cho sửa tiếp) và RECORD_GONE (thông báo + về sổ) trong `src/web/src/views/TransactionFormView.vue`
+- [ ] T020 [US3] Điểm vào sửa từ sổ (tap dòng giao dịch → form sửa) trong `src/web/src/views/LedgerView.vue`
 
-**Checkpoint**: US1 + US2 + US3 hoạt động độc lập.
+**Checkpoint**: US1 + US2 + US3 độc lập.
 
 ---
 
@@ -115,10 +104,10 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 **Goal**: Xóa luôn qua cảnh báo/xác nhận; số dư hoàn tác đúng; xử lý đã-bị-xóa-trước. (UC-TRK-05)
 
-**Independent Test**: quickstart kịch bản #19–#21 (dialog xác nhận; hủy không đổi gì; xóa xong số dư hoàn tác, sổ mọi người cập nhật).
+**Independent Test**: quickstart #19–#21.
 
-- [ ] T028 [P] [US4] Use case `DeleteTransaction` trong `src/lib/features/transactions/domain/usecases/delete_transaction.dart`
-- [ ] T029 [US4] Nút xóa từ sổ/form + dialog cảnh báo xác nhận (nêu rõ vĩnh viễn — SC-005); `RecordGone` → thông báo nhẹ + làm tươi sổ trong `src/lib/features/transactions/presentation/widgets/delete_transaction_dialog.dart`
+- [ ] T021 [P] [US4] Biz `src/api/module/transaction/biz/delete_transaction.go`: DELETE theo id (+`expected_updated_at` nếu có); 0 hàng → RECORD_GONE (thông báo nhẹ); publish 2 event; transport `DELETE /api/transactions/:id`
+- [ ] T022 [US4] Web: `src/web/src/components/DeleteTransactionDialog.vue` — cảnh báo nêu rõ xóa vĩnh viễn (SC-005), hủy không đổi gì; RECORD_GONE → toast + làm tươi sổ; gắn vào LedgerView + TransactionFormView
 
 **Checkpoint**: Cả 5 user story hoạt động độc lập.
 
@@ -126,11 +115,14 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-**Purpose**: Test tự động, kiểm chứng end-to-end, đồng bộ tài liệu.
+**Purpose**: Test các tầng, e2e 23 kịch bản, đồng bộ tài liệu.
 
-- [ ] T030 [P] Unit test (validate AddTransaction/UpdateTransaction: amount/mô tả/ngày; phân biệt conflict) trong `src/test/unit/transactions_domain_test.dart` + widget test (form chặn lưu khi thiếu danh mục/tài khoản; ledger hiển thị tên người nhập) trong `src/test/widget_test.dart`
-- [ ] T031 Chạy kiểm chứng `quickstart.md` (23 kịch bản — UI Chrome + API e2e đa thành viên #11/#13/#16–#18/#21 với Alice/Bob/Carol như cách feature 001; đối chiếu số dư #22 bằng truy vấn `account_balances`; #23 kiểm chống trùng khi thử lại)
-- [ ] T032 [P] Cập nhật tài liệu & khối References/History các artifact theo quy tắc lan truyền `CLAUDE.md` (BR-002 → implemented nếu đủ; entity-model/data-model nếu lệch; chạy `/speckit-analyze`)
+- [ ] T023 [P] Unit biz (Go): validate account/ngày tương lai, phân biệt conflict/gone, đổi loại — `src/api/module/transaction/biz/*_test.go`, `src/api/module/account/biz/*_test.go`
+- [ ] T024 [P] Integration storage (Postgres docker, tag `integration`): view `account_balances` khớp tổng sau chuỗi thêm/sửa/đổi-tài-khoản/xóa (SC-004); conditional update — `src/api/module/*/storage/*_integration_test.go`
+- [ ] T025 [P] Transport httptest: mã lỗi theo `contracts/transaction-api.md`; 404 ngoài hộ cho accounts/transactions — `src/api/module/*/transport/*_test.go`
+- [ ] T026 [P] Vitest: form validation (thiếu tài khoản/danh mục, ngày tương lai), store xử lý conflict — `src/web/src/**/__tests__/`
+- [ ] T027 Playwright e2e 23 kịch bản trong `src/web/e2e/` — multi-context #11/#13/#16–#18/#21 (Alice/Bob/Carol); #22 đối chiếu số dư qua `GET /api/accounts`; #23 offline (context.setOffline) → thử lại không trùng
+- [ ] T028 Chạy toàn bộ quickstart 001+002; cập nhật References/History các artifact theo `CLAUDE.md` (BR-002 → implemented nếu đủ; entity-model/data-model nếu lệch; chạy `/speckit-analyze`)
 
 ---
 
@@ -138,39 +130,20 @@ description: "Task list — Ghi chép thu nhập & chi phí (sổ chung hộ gia
 
 ### Phase Dependencies
 
-- **Setup (Phase 1)**: bắt đầu ngay.
-- **Foundational (Phase 2)**: phụ thuộc Setup. **BLOCKS mọi user story.** Trong phase: **T003 (users — ĐẦU TIÊN)** → T005 → T006 → T007 (nhánh migration, tuần tự); T004 sau T003; T008–T010 song song; T011 phụ thuộc T004; T012 phụ thuộc T009+T011; T013 song song.
-- **US5 (Phase 3)**: ngay sau Foundational — nền tảng định danh cho mọi story còn lại.
-- **US1–US4 (Phase 4–7)**: sau US5; theo thứ tự ưu tiên hoặc song song (US3/US4 cần US2 làm điểm vào UI nhưng use case/repo độc lập).
-- **Polish (Phase 8)**: sau các story mong muốn.
-
-### User Story Dependencies
-
-- **US5 (P1 nền tảng)**: chỉ phụ thuộc Foundational — làm TRƯỚC TIÊN.
-- **US1 (P1)**: phụ thuộc US5; là MVP cùng US5.
-- **US2 (P2)**: phụ thuộc US5; độc lập US1 (dữ liệu test có thể seed).
-- **US3 (P3)** / **US4 (P4)**: phụ thuộc US5; điểm vào UI từ US2 (T027, T029 chạm `ledger_screen.dart` — sau T023).
+- **Setup (P1)**: sau khi 001 xong Foundational + US1 (T001–T019 của 001).
+- **Foundational (P2)**: sau Setup. **BLOCKS mọi user story.** Trong phase: T003 → T004 (migration tuần tự); T005 sau T003; T006 sau T003; T007 sau T004; T008 ∥ T006; T009 sau T006.
+- **US5 (P3)**: ngay sau Foundational — chỉ kiểm chứng (nền tảng có từ 001).
+- **US1 (P4)**: sau Foundational; T011 → T012 → T013 → T014.
+- **US2 (P5)**: sau Foundational (độc lập US1 về API; UI dùng chung route); T015 → T016 → T017.
+- **US3 (P6)** / **US4 (P7)**: sau US1 (form) + US2 (điểm vào sổ).
+- **Polish (P8)**: sau các story mong muốn.
 
 ### Parallel Opportunities
 
-- Setup: T001, T002 song song.
-- Foundational: T008, T010, T013 song song với nhánh migration; T004 song song T005/T006.
-- Use case các story (T016, T021, T025, T028) đều [P] — khác file, có thể viết song song trước khi ghép UI.
-- Sau US5: Dev A → US1 (form), Dev B → US2 (ledger); US3/US4 nối sau US2.
-
----
-
-## Parallel Example: Foundational
-
-```bash
-# Nhánh migration (tuần tự, users ĐẦU TIÊN):
-Task: "T003 áp 0011_users.sql qua setup_dev.sql + verify API"
-Task: "T005 0012_accounts.sql" → "T006 0013_transactions_v2.sql" → "T007 gộp setup_dev.sql"
-# Song song nhánh Dart:
-Task: "T008 entities in src/lib/features/transactions/domain/entities/"
-Task: "T010 DTO models in src/lib/features/transactions/data/models/transaction_model.dart"
-Task: "T013 routes in src/lib/core/router/app_router.dart"
-```
+- Setup: T001 ∥ T002.
+- Foundational: T005/T006 ∥ T008; T009 nối sau.
+- US1: T011 (biz) ∥ chuẩn bị T013 (form UI); Dev A → US1 (form), Dev B → US2 (ledger) sau Foundational.
+- Polish: T023–T026 song song; T027 sau cùng.
 
 ---
 
@@ -178,18 +151,18 @@ Task: "T013 routes in src/lib/core/router/app_router.dart"
 
 ### MVP First (US5 + US1)
 
-1. Phase 1 Setup → 2. Phase 2 Foundational (**T003 users trước tiên**) → 3. Phase 3 US5 (định danh) → 4. Phase 4 US1 (nhập giao dịch) → 5. **DỪNG & kiểm chứng** quickstart #1–#10 → demo MVP.
+1. Phase 1 Setup → 2. Phase 2 Foundational (**T003→T004 migrations trước tiên**) → 3. Phase 3 US5 (kiểm chứng #1–#3) → 4. Phase 4 US1 → 5. **DỪNG & kiểm chứng** quickstart #4–#10, #23 → demo MVP.
 
 ### Incremental Delivery
 
-US5 (định danh) → US1 (nhập — MVP) → US2 (sổ chung + realtime) → US3 (sửa + concurrency) → US4 (xóa) → Polish (test + e2e 23 kịch bản + docs). Mỗi story kiểm chứng độc lập theo nhóm kịch bản quickstart của nó trước khi sang story sau.
+US5 (kiểm chứng) → US1 (nhập — MVP) → US2 (sổ + realtime) → US3 (sửa + concurrency) → US4 (xóa) → Polish (test + e2e 23 kịch bản + docs). Mỗi story kiểm chứng độc lập theo nhóm kịch bản quickstart trước khi sang story sau.
 
 ---
 
 ## Notes
 
-- [P] = khác file, không phụ thuộc nhau. Nhãn [US#] gắn task với user story (US5 = story nền tảng).
-- **T003 là tiền đề bắt buộc** — users độc lập phải xong & verify trước mọi thứ (yêu cầu 2026-07-06).
-- Số dư KHÔNG lưu cột riêng — view `account_balances` (R16); mọi kiểm chứng số dư đối chiếu qua view.
-- Quản lý tài khoản đầy đủ (CRUD, chuyển tiền) thuộc BR-005; quản lý hộ thuộc BR riêng — ở đây chỉ seed mặc định.
+- [P] = khác file, không phụ thuộc nhau. Nhãn [US#] gắn task với user story (US5 = nền tảng, đã dựng ở 001).
+- Số dư KHÔNG lưu cột riêng — view `account_balances` (D14); mọi kiểm chứng số dư đối chiếu qua view/GET /api/accounts.
+- Bất biến ở **biz trong DB transaction** (D3/001); KHÔNG trigger nghiệp vụ, KHÔNG AutoMigrate.
+- Quản lý tài khoản đầy đủ (CRUD, chuyển tiền) thuộc BR-005; quản lý hộ thuộc feature riêng — ở đây chỉ seed mặc định.
 - Commit sau mỗi task hoặc nhóm logic; dừng ở mỗi Checkpoint để kiểm chứng story độc lập.
