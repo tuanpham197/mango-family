@@ -173,6 +173,7 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - **Nguồn (BR)**: [`BR-002`](../business-requirements/BR-002.md) — Ghi chép thu nhập & chi phí; kế thừa mô hình sổ chung hộ gia đình từ [`BR-001`](../business-requirements/BR-001.md) / feature [`001-transaction-categorization`](../001-transaction-categorization/spec.md).
 - **Use cases**: [`UC-TRK-01…05`](../use-cases/002-transaction-tracking/) · sơ đồ [`use-cases.puml`](../diagrams/use-cases.puml).
 - **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md).
+- **UI design (wireframes)**: [`specs/design/design.html`](../design/design.html) — màn **2 · Nhập giao dịch**, **3 · Danh sách giao dịch**, **6 · Tài khoản/Ví**; widget giao dịch gần đây ở màn **1 · Tổng quan**; chỉ mục màn hình → spec tại [`specs/design/README.md`](../design/README.md).
 - **Dẫn xuất (design)**: [`plan.md`](plan.md) · [`research.md`](research.md) · [`data-model.md`](data-model.md) · [`contracts/`](contracts/) · [`quickstart.md`](quickstart.md) · [`tasks.md`](tasks.md).
 - **Checklist chất lượng**: [`checklists/requirements.md`](checklists/requirements.md).
 
@@ -182,3 +183,4 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - v2 (2026-07-06): thêm US5 + FR-015/FR-016 + entity Người dùng — danh sách người dùng độc lập là nguồn định danh duy nhất, bước nền tảng thực hiện đầu tiên.
 - v3 (2026-07-09): review (`/speckit-specify review`) — thêm US1 #7 chặn ngày tương lai (khớp FR-005 / UC-TRK-02 E4 / quickstart #9); SC-006 chốt ngưỡng 5 giây (đề xuất, cần nghiệp vụ xác nhận); bỏ tên bảng/cột kỹ thuật khỏi Key Entities; thống nhất ngôn ngữ FR-008/FR-009; bổ sung khối References/Truy vết & History.
 - v4 (2026-07-10): re-platform Go+Vue — generalize các mô tả dính cơ chế stack cũ (đối chiếu phiên qua email, nơi lưu thông tin xác thực, backfill hồ sơ từ hệ xác thực cũ) thành trung lập; phạm vi & FR không đổi.
+- v5 (2026-07-13): thêm tham chiếu UI wireframes [`specs/design/design.html`](../design/design.html) (màn 2 · Nhập giao dịch, 3 · Danh sách giao dịch, 6 · Tài khoản/Ví) vào References; phạm vi & FR không đổi.

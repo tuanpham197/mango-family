@@ -174,3 +174,20 @@ Khi người dùng nhập giao dịch, hệ thống gợi ý một danh mục ph
 - **Phụ thuộc luồng nhập giao dịch (BR-002)**: Việc gán danh mục diễn ra trong luồng nhập giao dịch định nghĩa ở BR-002; spec này chỉ bao phủ phần liên quan đến danh mục của luồng đó.
 - **Là nền tảng cho các requirement khác**: Hệ thống danh mục này là cơ sở dữ liệu nền cho Ngân sách (BR-003) và Báo cáo (BR-004).
 - **Owner & Target Quarter**: Chưa xác định (TBD trong BR-001); không ảnh hưởng phạm vi chức năng.
+
+## References / Truy vết
+
+> Giữ các liên kết này cập nhật mỗi khi một artifact thay đổi (xem quy tắc lan truyền trong [`CLAUDE.md`](../../CLAUDE.md)).
+
+- **Nguồn (BR)**: [`BR-001`](../business-requirements/BR-001.md) — Phân loại giao dịch.
+- **Use cases**: [`UC-CAT-01…08`](../use-cases/001-transaction-categorization/) · sơ đồ [`use-cases.puml`](../diagrams/use-cases.puml).
+- **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md).
+- **UI design (wireframes)**: [`specs/design/design.html`](../design/design.html) — màn **7 · Quản lý danh mục** (lưới danh mục Chi/Thu, danh mục con, thêm/sửa) và trường chọn danh mục trong màn **2 · Nhập giao dịch**; chỉ mục màn hình → spec tại [`specs/design/README.md`](../design/README.md).
+- **Dẫn xuất (design)**: [`plan.md`](plan.md) · [`research.md`](research.md) · [`data-model.md`](data-model.md) · [`contracts/`](contracts/) · [`quickstart.md`](quickstart.md) · [`tasks.md`](tasks.md).
+- **Checklist chất lượng**: [`checklists/requirements.md`](checklists/requirements.md).
+
+## History
+
+- v1 (2026-06-24): tạo spec từ BR-001 (Clarifications session 2026-06-24: gán cha/con, loại cố định, danh mục mặc định, cơ chế gợi ý).
+- v2 (2026-06-29): chuyển sang mô hình sổ chung hộ gia đình — chia sẻ danh mục & giao dịch trong hộ, mọi thành viên quyền ngang nhau (Clarifications session 2026-06-29).
+- v3 (2026-07-13): bổ sung khối References/Truy vết & History; liên kết UI wireframes [`specs/design/design.html`](../design/design.html) (màn 7 · Quản lý danh mục, trường danh mục ở màn 2 · Nhập giao dịch); phạm vi & FR không đổi.

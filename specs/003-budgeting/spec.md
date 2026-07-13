@@ -169,9 +169,11 @@ Bất kỳ thành viên nào cũng có thể sửa (giới hạn, kỳ, danh m�
 - **Tiền đề**: [`BR-001`](../business-requirements/BR-001.md) / feature [`001-transaction-categorization`](../001-transaction-categorization/spec.md) (danh mục, mô hình hộ) · [`BR-002`](../business-requirements/BR-002.md) / feature [`002-transaction-tracking`](../002-transaction-tracking/spec.md) (giao dịch, số dư).
 - **Use cases**: chưa tạo — dự kiến `UC-BGT-01` (tạo ngân sách), `UC-BGT-02` (theo dõi & cảnh báo) tại `specs/use-cases/003-budgeting/` (bước sau).
 - **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md) — cần bổ sung BUDGET/BUDGET_ALERT khi cập nhật (bước sau).
+- **UI design (wireframes)**: [`specs/design/design.html`](../design/design.html) — màn **4 · Ngân sách** (tổng tháng + tiến độ theo danh mục; cảnh báo ⚠ amber ≥80%, đỏ khi vượt mức — BR-BGT-006/007); widget ngân sách ở màn **1 · Tổng quan**; chỉ mục màn hình → spec tại [`specs/design/README.md`](../design/README.md).
 - **Dẫn xuất (design)**: `plan.md` · `research.md` · `data-model.md` · `contracts/` · `quickstart.md` · `tasks.md` (chưa tạo — `/speckit-plan`).
 - **Checklist chất lượng**: [`checklists/requirements.md`](checklists/requirements.md).
 
 ## History
 
 - v1 (2026-07-10): tạo spec từ BR-003 (mô hình sổ chung hộ gia đình kế thừa BR-001/BR-002); 4 Open Question của BR-003 (ngưỡng cấu hình, kênh cảnh báo, tự lặp kỳ, danh mục nhiều ngân sách) chốt bằng mặc định an toàn trong Assumptions — chờ nghiệp vụ xác nhận; bổ sung FR-012 sửa/xóa ngân sách (suy luận vòng đời tối thiểu).
+- v2 (2026-07-13): thêm tham chiếu UI wireframes [`specs/design/design.html`](../design/design.html) (màn 4 · Ngân sách, widget ngân sách ở màn 1 · Tổng quan) vào References; phạm vi & FR không đổi.

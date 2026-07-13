@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=Patrick+Hand&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  body { background:#e9e8e3; }
+</style>
+</helmet>
+
+<!-- ============ TITLE ============ -->
+<div style="position:absolute;left:80px;top:24px;width:900px">
+  <div style="font-family:'Kalam',cursive;font-weight:700;font-size:34px;color:#2b2b2b">App Quản Lý Tài Chính Cá Nhân — Wireframes</div>
+  <div style="font-family:'Caveat',cursive;font-size:22px;color:#6b6b6b;margin-top:2px">Mobile · lo-fi · tiếng Việt · VNĐ — 7 màn hình cốt lõi theo tài liệu BR</div>
+</div>
+
+<!-- legend -->
+<div style="position:absolute;left:1000px;top:30px;width:430px;background:#fff;border:1.5px solid #d8d8d4;border-radius:10px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);font-family:'Patrick Hand',cursive;font-size:15px;color:#3a3a3a">
+  <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:7px"><span style="width:14px;height:14px;border-radius:50%;background:#1f8a5b;display:inline-block"></span>Chính / Thu nhập</div>
+    <div style="display:flex;align-items:center;gap:7px"><span style="width:14px;height:14px;border-radius:50%;background:#d1453b;display:inline-block"></span>Chi phí / Vượt mức</div>
+    <div style="display:flex;align-items:center;gap:7px"><span style="width:14px;height:14px;border-radius:50%;background:#d98a1f;display:inline-block"></span>Cảnh báo</div>
+    <div style="display:flex;align-items:center;gap:7px"><span style="width:18px;height:12px;background:repeating-linear-gradient(45deg,#e4e4df,#e4e4df 4px,#f3f3ef 4px,#f3f3ef 8px);display:inline-block;border:1px dashed #bbb"></span>Placeholder</div>
+  </div>
+</div>
+
+<!-- ============ ROW 1 ============ -->
+
+<!-- 1. DASHBOARD -->
+<div style="position:absolute;left:80px;top:140px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">1 · Tổng quan (Dashboard)</div>
+  <div data-screen-label="Dashboard" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 11px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <!-- status -->
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#9a9a9a;padding:2px 6px 8px">9:41<span>● ● ● ▮</span></div>
+    <!-- greeting -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div><div style="font-size:13px;color:#8a8a8a;line-height:1">Chào buổi sáng,</div><div style="font-size:19px;line-height:1.2">Minh Anh</div></div>
+      <div style="width:38px;height:38px;border-radius:50%;background:#eee;border:1.5px solid #ccc"></div>
+    </div>
+    <!-- net worth card -->
+    <div style="background:#1f8a5b;border-radius:16px;padding:15px 16px;color:#fff;margin-bottom:12px">
+      <div style="font-size:13px;opacity:.85">Tổng tài sản ròng</div>
+      <div style="font-size:28px;line-height:1.25">24.560.000 ₫</div>
+      <div style="font-size:13px;opacity:.9">▲ 5,2% so với tháng trước</div>
+    </div>
+    <!-- income / expense -->
+    <div style="display:flex;gap:9px;margin-bottom:14px">
+      <div style="flex:1;border:1.5px solid #e2e2dd;border-radius:12px;padding:9px 11px">
+        <div style="font-size:12px;color:#8a8a8a">Thu nhập</div>
+        <div style="font-size:16px;color:#1f8a5b">+18,2tr</div>
+      </div>
+      <div style="flex:1;border:1.5px solid #e2e2dd;border-radius:12px;padding:9px 11px">
+        <div style="font-size:12px;color:#8a8a8a">Chi phí</div>
+        <div style="font-size:16px;color:#d1453b">−9,4tr</div>
+      </div>
+    </div>
+    <!-- budget mini -->
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px"><span style="font-size:15px">Ngân sách tháng 7</span><span style="font-size:12px;color:#8a8a8a">Xem tất cả ›</span></div>
+    <div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:12px;color:#6b6b6b"><span>Ăn uống</span><span>3,5 / 5tr</span></div><div style="height:7px;background:#eee;border-radius:4px;margin-top:3px"><div style="width:70%;height:100%;background:#1f8a5b;border-radius:4px"></div></div></div>
+    <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;color:#6b6b6b"><span>Di chuyển</span><span>0,9 / 1tr</span></div><div style="height:7px;background:#eee;border-radius:4px;margin-top:3px"><div style="width:90%;height:100%;background:#d98a1f;border-radius:4px"></div></div></div>
+    <!-- recent -->
+    <div style="font-size:15px;margin-bottom:8px">Giao dịch gần đây</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:11px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">🍜</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Bún bò Huế</div><div style="font-size:11px;color:#9a9a9a">Ăn uống · Tiền mặt</div></div><span style="font-size:14px;color:#d1453b">−45.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">💰</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Lương tháng 6</div><div style="font-size:11px;color:#9a9a9a">Thu nhập · NH Vietcombank</div></div><span style="font-size:14px;color:#1f8a5b">+18.000.000</span></div>
+    <!-- bottom nav -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1.5px solid #eee;margin:0 -11px;padding:8px 16px 12px">
+      <div style="text-align:center;color:#1f8a5b;font-size:10px"><div style="width:18px;height:18px;border:2px solid #1f8a5b;border-radius:4px;margin:0 auto 3px"></div>Tổng quan</div>
+      <div style="text-align:center;color:#a8a8a8;font-size:10px"><div style="width:18px;height:18px;border:2px solid #bbb;border-radius:4px;margin:0 auto 3px"></div>Giao dịch</div>
+      <div style="text-align:center;margin-bottom:2px"><div style="width:42px;height:42px;border-radius:50%;background:#1f8a5b;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;line-height:1">+</div></div>
+      <div style="text-align:center;color:#a8a8a8;font-size:10px"><div style="width:18px;height:18px;border:2px solid #bbb;border-radius:4px;margin:0 auto 3px"></div>Ngân sách</div>
+      <div style="text-align:center;color:#a8a8a8;font-size:10px"><div style="width:18px;height:18px;border:2px solid #bbb;border-radius:4px;margin:0 auto 3px"></div>Báo cáo</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. ADD TRANSACTION -->
+<div style="position:absolute;left:460px;top:140px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">2 · Nhập giao dịch</div>
+  <div data-screen-label="Add Transaction" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 16px;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:16px"><span style="font-size:20px;color:#888">✕</span><span>Giao dịch mới</span><span style="width:18px"></span></div>
+    <!-- type toggle -->
+    <div style="display:flex;background:#f1f1ec;border-radius:10px;padding:3px;margin-bottom:16px;font-size:13px">
+      <div style="flex:1;text-align:center;padding:7px 0;background:#d1453b;color:#fff;border-radius:8px">Chi phí</div>
+      <div style="flex:1;text-align:center;padding:7px 0;color:#777">Thu nhập</div>
+      <div style="flex:1;text-align:center;padding:7px 0;color:#777">Chuyển</div>
+    </div>
+    <!-- amount -->
+    <div style="text-align:center;margin-bottom:4px"><span style="font-size:13px;color:#9a9a9a">Số tiền</span></div>
+    <div style="text-align:center;font-size:38px;border-bottom:2px dashed #ddd;padding-bottom:8px;margin-bottom:14px">120.000<span style="font-size:20px;color:#aaa"> ₫</span></div>
+    <!-- fields -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f0eb;font-size:14px"><span style="color:#8a8a8a">Danh mục</span><span>🍜 Ăn uống ›</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f0eb;font-size:14px"><span style="color:#8a8a8a">Tài khoản</span><span>Tiền mặt ›</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f0eb;font-size:14px"><span style="color:#8a8a8a">Ngày &amp; giờ</span><span>Hôm nay, 12:30 ›</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;margin-bottom:12px;font-size:14px"><span style="color:#8a8a8a">Ghi chú</span><span style="color:#bbb">Thêm mô tả…</span></div>
+    <!-- keypad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;font-size:20px;text-align:center">
+      <div style="padding:8px 0;background:#f6f6f1;border-radius:9px">1</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">2</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">3</div>
+      <div style="padding:8px 0;background:#f6f6f1;border-radius:9px">4</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">5</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">6</div>
+      <div style="padding:8px 0;background:#f6f6f1;border-radius:9px">7</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">8</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">9</div>
+      <div style="padding:8px 0;background:#f6f6f1;border-radius:9px">.</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px">0</div><div style="padding:8px 0;background:#f6f6f1;border-radius:9px;color:#888">⌫</div>
+    </div>
+    <div style="background:#1f8a5b;color:#fff;text-align:center;padding:13px 0;border-radius:12px;font-size:17px">Lưu giao dịch</div>
+  </div>
+</div>
+
+<!-- 3. TRANSACTION LIST -->
+<div style="position:absolute;left:840px;top:140px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">3 · Danh sách giao dịch</div>
+  <div data-screen-label="Transactions" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:18px"><span>Giao dịch</span><span style="font-size:15px;color:#888">⚲  ⚙ Lọc</span></div>
+    <!-- month selector -->
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#f4f4ef;border-radius:10px;padding:8px 14px;margin-bottom:12px;font-size:15px"><span style="color:#999">‹</span><span>Tháng 7, 2026</span><span style="color:#999">›</span></div>
+    <!-- summary -->
+    <div style="display:flex;gap:9px;margin-bottom:14px;font-size:13px">
+      <div style="flex:1;border:1.5px solid #e2e2dd;border-radius:10px;padding:7px 10px"><div style="color:#8a8a8a;font-size:11px">Thu</div><div style="color:#1f8a5b">+18,2tr</div></div>
+      <div style="flex:1;border:1.5px solid #e2e2dd;border-radius:10px;padding:7px 10px"><div style="color:#8a8a8a;font-size:11px">Chi</div><div style="color:#d1453b">−9,4tr</div></div>
+    </div>
+    <!-- group: today -->
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#9a9a9a;margin-bottom:7px"><span>HÔM NAY · 25 TH7</span><span>−165.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">🍜</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Bún bò Huế</div><div style="font-size:11px;color:#9a9a9a">Ăn uống</div></div><span style="font-size:13px;color:#d1453b">−45.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">🛒</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Đi chợ</div><div style="font-size:11px;color:#9a9a9a">Ăn uống · Đi chợ</div></div><span style="font-size:13px;color:#d1453b">−120.000</span></div>
+    <!-- group: yesterday -->
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#9a9a9a;margin:6px 0 7px"><span>HÔM QUA · 24 TH7</span><span>+18.000.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">💰</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Lương tháng 6</div><div style="font-size:11px;color:#9a9a9a">Thu nhập · Vietcombank</div></div><span style="font-size:13px;color:#1f8a5b">+18.000.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">⇄</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Rút tiền mặt</div><div style="font-size:11px;color:#9a9a9a">Chuyển · VCB → Tiền mặt</div></div><span style="font-size:13px;color:#888">2.000.000</span></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="width:30px;height:30px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:13px">⚡</span><div style="flex:1"><div style="font-size:14px;line-height:1.1">Tiền điện</div><div style="font-size:11px;color:#9a9a9a">Hóa đơn · Vietcombank</div></div><span style="font-size:13px;color:#d1453b">−380.000</span></div>
+    <div style="height:6px"></div>
+  </div>
+</div>
+
+<!-- 4. BUDGET -->
+<div style="position:absolute;left:1220px;top:140px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">4 · Ngân sách</div>
+  <div data-screen-label="Budget" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:18px"><span>Ngân sách</span><span style="font-size:22px;color:#1f8a5b">+</span></div>
+    <!-- total -->
+    <div style="border:1.5px solid #e2e2dd;border-radius:14px;padding:13px 15px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:14px;color:#8a8a8a">Tổng tháng 7</span><span style="font-size:13px;color:#8a8a8a">61%</span></div>
+      <div style="font-size:22px;margin:3px 0">9.150.000 <span style="font-size:14px;color:#aaa">/ 15.000.000 ₫</span></div>
+      <div style="height:9px;background:#eee;border-radius:5px"><div style="width:61%;height:100%;background:#1f8a5b;border-radius:5px"></div></div>
+    </div>
+    <div style="font-size:12px;color:#9a9a9a;margin:12px 0 9px">THEO DANH MỤC</div>
+    <!-- ok -->
+    <div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>🍜 Ăn uống</span><span style="color:#8a8a8a;font-size:12px">3,5 / 5tr</span></div><div style="height:8px;background:#eee;border-radius:4px;margin-top:4px"><div style="width:70%;height:100%;background:#1f8a5b;border-radius:4px"></div></div></div>
+    <!-- warning -->
+    <div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>🚕 Di chuyển <span style="font-size:11px;color:#d98a1f">⚠ 90%</span></span><span style="color:#8a8a8a;font-size:12px">0,9 / 1tr</span></div><div style="height:8px;background:#eee;border-radius:4px;margin-top:4px"><div style="width:90%;height:100%;background:#d98a1f;border-radius:4px"></div></div></div>
+    <!-- over -->
+    <div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>🛍 Mua sắm <span style="font-size:11px;color:#d1453b">Vượt 320k</span></span><span style="color:#d1453b;font-size:12px">2,32 / 2tr</span></div><div style="height:8px;background:#eee;border-radius:4px;margin-top:4px"><div style="width:100%;height:100%;background:#d1453b;border-radius:4px"></div></div></div>
+    <!-- ok -->
+    <div style="margin-bottom:13px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>⚡ Hóa đơn</span><span style="color:#8a8a8a;font-size:12px">1,2 / 3tr</span></div><div style="height:8px;background:#eee;border-radius:4px;margin-top:4px"><div style="width:40%;height:100%;background:#1f8a5b;border-radius:4px"></div></div></div>
+    <div style="border:1.5px dashed #c8c8c2;color:#777;text-align:center;padding:11px 0;border-radius:11px;font-size:15px;margin-bottom:14px">+ Tạo ngân sách mới</div>
+  </div>
+</div>
+
+<!-- ============ ROW 2 ============ -->
+
+<!-- 5. REPORTS -->
+<div style="position:absolute;left:80px;top:900px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">5 · Báo cáo &amp; phân tích</div>
+  <div data-screen-label="Reports" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="font-size:18px;margin-bottom:12px">Báo cáo</div>
+    <!-- period tabs -->
+    <div style="display:flex;background:#f1f1ec;border-radius:9px;padding:3px;margin-bottom:14px;font-size:13px">
+      <div style="flex:1;text-align:center;padding:6px 0;color:#777">Tuần</div>
+      <div style="flex:1;text-align:center;padding:6px 0;background:#fff;border-radius:7px;box-shadow:0 1px 2px rgba(0,0,0,.08)">Tháng</div>
+      <div style="flex:1;text-align:center;padding:6px 0;color:#777">Quý</div>
+      <div style="flex:1;text-align:center;padding:6px 0;color:#777">Năm</div>
+    </div>
+    <!-- 3 numbers -->
+    <div style="display:flex;text-align:center;margin-bottom:16px;font-size:13px">
+      <div style="flex:1"><div style="color:#8a8a8a;font-size:11px">Thu</div><div style="color:#1f8a5b">18,2tr</div></div>
+      <div style="flex:1;border-left:1px solid #eee;border-right:1px solid #eee"><div style="color:#8a8a8a;font-size:11px">Chi</div><div style="color:#d1453b">9,4tr</div></div>
+      <div style="flex:1"><div style="color:#8a8a8a;font-size:11px">Ròng</div><div>+8,8tr</div></div>
+    </div>
+    <!-- donut -->
+    <div style="font-size:14px;margin-bottom:9px">Phân bổ chi tiêu</div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div style="position:relative;width:96px;height:96px;border-radius:50%;background:conic-gradient(#1f8a5b 0 38%,#d98a1f 38% 62%,#d1453b 62% 80%,#5b7fb4 80% 100%);flex-shrink:0">
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:54px;height:54px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;color:#888;text-align:center;line-height:1.1">9,4<br>tr</div>
+      </div>
+      <div style="font-size:12px;line-height:1.9">
+        <div><span style="display:inline-block;width:10px;height:10px;background:#1f8a5b;border-radius:2px;margin-right:6px"></span>Ăn uống 38%</div>
+        <div><span style="display:inline-block;width:10px;height:10px;background:#d98a1f;border-radius:2px;margin-right:6px"></span>Hóa đơn 24%</div>
+        <div><span style="display:inline-block;width:10px;height:10px;background:#d1453b;border-radius:2px;margin-right:6px"></span>Mua sắm 18%</div>
+        <div><span style="display:inline-block;width:10px;height:10px;background:#5b7fb4;border-radius:2px;margin-right:6px"></span>Khác 20%</div>
+      </div>
+    </div>
+    <!-- trend bars -->
+    <div style="font-size:14px;margin-bottom:9px">Xu hướng 6 tháng</div>
+    <div style="display:flex;align-items:flex-end;gap:9px;height:90px;border-bottom:1.5px solid #e6e6e0;padding-bottom:2px;margin-bottom:6px">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:34px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:22px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:40px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:30px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:30px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:20px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:46px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:34px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:42px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:24px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px"><div style="height:50px;background:#1f8a5b;border-radius:3px 3px 0 0"></div><div style="height:28px;background:#d1453b;border-radius:0 0 3px 3px"></div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa;margin-bottom:14px"><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span></div>
+  </div>
+</div>
+
+<!-- 6. ACCOUNTS -->
+<div style="position:absolute;left:460px;top:900px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">6 · Tài khoản / Ví</div>
+  <div data-screen-label="Accounts" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:18px"><span>Tài khoản</span><span style="font-size:22px;color:#1f8a5b">+</span></div>
+    <div style="background:#2b2b2b;color:#fff;border-radius:14px;padding:14px 16px;margin-bottom:16px">
+      <div style="font-size:13px;opacity:.75">Tổng số dư</div>
+      <div style="font-size:26px">24.560.000 ₫</div>
+    </div>
+    <!-- accounts -->
+    <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #f0f0eb"><span style="width:34px;height:34px;border-radius:9px;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:15px">💵</span><div style="flex:1"><div style="font-size:15px;line-height:1.1">Tiền mặt</div><div style="font-size:11px;color:#9a9a9a">Tiền mặt</div></div><span style="font-size:15px">3.560.000</span></div>
+    <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #f0f0eb"><span style="width:34px;height:34px;border-radius:9px;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:15px">🏦</span><div style="flex:1"><div style="font-size:15px;line-height:1.1">Vietcombank</div><div style="font-size:11px;color:#9a9a9a">Tài khoản ngân hàng</div></div><span style="font-size:15px">19.500.000</span></div>
+    <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #f0f0eb"><span style="width:34px;height:34px;border-radius:9px;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:15px">📱</span><div style="flex:1"><div style="font-size:15px;line-height:1.1">Ví MoMo</div><div style="font-size:11px;color:#9a9a9a">Ví điện tử</div></div><span style="font-size:15px">1.500.000</span></div>
+    <div style="display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid #f0f0eb;margin-bottom:16px"><span style="width:34px;height:34px;border-radius:9px;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:15px">💳</span><div style="flex:1"><div style="font-size:15px;line-height:1.1">Thẻ tín dụng</div><div style="font-size:11px;color:#9a9a9a">Thẻ tín dụng</div></div><span style="font-size:15px;color:#d1453b">−1.200.000</span></div>
+    <div style="display:flex;gap:9px;margin-bottom:14px;font-size:15px">
+      <div style="flex:1;background:#1f8a5b;color:#fff;text-align:center;padding:12px 0;border-radius:11px">⇄ Chuyển tiền</div>
+      <div style="flex:1;border:1.5px dashed #c8c8c2;color:#777;text-align:center;padding:12px 0;border-radius:11px">+ Thêm</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. CATEGORIES -->
+<div style="position:absolute;left:840px;top:900px;width:290px">
+  <div data-drags-parent="1" style="position:absolute;top:-28px;left:2px;font-family:'Caveat',cursive;font-size:20px;font-weight:600;color:#444">7 · Quản lý danh mục</div>
+  <div data-screen-label="Categories" style="background:#fff;border:2.5px solid #2b2b2b;border-radius:30px;padding:12px 14px 0;box-shadow:0 2px 6px rgba(0,0,0,.1);font-family:'Patrick Hand',cursive;color:#2b2b2b;box-sizing:border-box;overflow:hidden">
+    <div style="font-size:18px;margin-bottom:12px">Danh mục</div>
+    <div style="display:flex;background:#f1f1ec;border-radius:9px;padding:3px;margin-bottom:16px;font-size:13px">
+      <div style="flex:1;text-align:center;padding:7px 0;background:#fff;border-radius:7px;box-shadow:0 1px 2px rgba(0,0,0,.08)">Chi phí</div>
+      <div style="flex:1;text-align:center;padding:7px 0;color:#777">Thu nhập</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:11px;text-align:center;font-size:12px;margin-bottom:14px">
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🍜</div>Ăn uống</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🚕</div>Di chuyển</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">⚡</div>Hóa đơn</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🛍</div>Mua sắm</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🎬</div>Giải trí</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🏥</div>Sức khỏe</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🎓</div>Học tập</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;background:#f0efe9;border:1.5px solid #ddd;display:flex;align-items:center;justify-content:center;font-size:19px;margin:0 auto 5px">🏠</div>Nhà cửa</div>
+      <div><div style="width:46px;height:46px;border-radius:50%;border:1.5px dashed #c8c8c2;display:flex;align-items:center;justify-content:center;font-size:22px;color:#999;margin:0 auto 5px">+</div><span style="color:#999">Thêm</span></div>
+    </div>
+    <div style="font-size:11px;color:#9a9a9a;margin-bottom:8px">Chạm vào danh mục để sửa tên, biểu tượng, hoặc quản lý danh mục con (vd: Ăn uống → Ăn ngoài, Đi chợ).</div>
+    <div style="height:6px"></div>
+  </div>
+</div>
+
+<!-- ============ POST-ITS ============ -->
+<div style="position:absolute;left:1220px;top:910px;width:230px;background:#fef4a8;padding:14px 16px;font-family:'Caveat',cursive;font-size:18px;color:#4a4327;box-shadow:0 2px 5px rgba(0,0,0,.12);transform:rotate(-1.5deg);line-height:1.35">
+  💡 Nút <b>＋</b> ở giữa thanh nav mở thẳng màn Nhập giao dịch với bàn phím số → ghi chép &lt; 5 giây.
+</div>
+<div style="position:absolute;left:1220px;top:1060px;width:230px;background:#cfe9d6;padding:14px 16px;font-family:'Caveat',cursive;font-size:18px;color:#234a32;box-shadow:0 2px 5px rgba(0,0,0,.12);transform:rotate(1.2deg);line-height:1.35">
+  ⚠ Ngân sách: cảnh báo amber khi ≥80%, đỏ khi vượt mức (BR-BGT-006/007).
+</div>
+<div style="position:absolute;left:1220px;top:1210px;width:230px;background:#d8e3f5;padding:14px 16px;font-family:'Caveat',cursive;font-size:18px;color:#22324a;box-shadow:0 2px 5px rgba(0,0,0,.12);transform:rotate(-1deg);line-height:1.35">
+  ⇄ Chuyển tiền giữa ví KHÔNG tính vào Thu/Chi — chỉ đổi số dư (BR-ACC-007).
+</div>
+
+<!-- flow note -->
+<div style="position:absolute;left:80px;top:1560px;width:1000px;font-family:'Caveat',cursive;font-size:20px;color:#777">
+  Luồng chính:  Tổng quan  →  ＋ Nhập giao dịch  →  Danh sách  ·  Ngân sách &amp; Báo cáo theo dõi  ·  Tài khoản &amp; Danh mục là cấu hình nền.
+</div>
+
+</x-dc>
+</body>
+</html>
