@@ -47,10 +47,13 @@ Feature status:
   tảng định danh tối thiểu (users + JWT cookie + household scope), US1–US4 (bắt buộc phân loại cùng
   loại, CRUD danh mục + concurrency `expected_updated_at`, danh mục con 1 cấp, gợi ý học lịch sử),
   đồng bộ realtime qua WebSocket. Còn mở: bộ danh mục mặc định chờ nghiệp vụ; Quản lý hộ dùng dev seed.
-- **002-transaction-tracking**: spec v4 complete; design artifacts REWRITTEN for Go+Vue
-  (2026-07-10: plan/research D13–D19/data-model/contracts = `transaction-api.md` + `db-schema.sql`
-  delta/quickstart 23 kịch bản). Extends 001's foundation (accounts + balances view + transactions
-  v2). `tasks.md` regenerated 2026-07-10 (28 tasks) — implement AFTER 001. No legacy Flutter docs remain.
+- **002-transaction-tracking**: ✅ **implemented (Go + Vue)** — 28/28 task xong & kiểm chứng
+  (Go unit + integration, Vitest 20/20, Playwright e2e 33/33 = 18 của 001 + 15 kịch bản 002). Mở
+  rộng nền tảng 001: `module/account` (đọc + view số dư `account_balances`), vòng đời giao dịch
+  đầy đủ (tài khoản bắt buộc, chặn ngày tương lai, mốc lạc quan `updated_at` cho sửa/xóa), sổ chung
+  phân trang + realtime, tài khoản mặc định "Tiền mặt" seed theo hộ. Migrations goose 00006 (accounts)
+  · 00007 (transactions.account_id + updated_at + view `account_balances`). Còn mở: quản lý tài khoản
+  đầy đủ (CRUD/chuyển tiền) thuộc BR-005.
 - **003-budgeting**: spec v1 complete (tech-agnostic), awaiting plan.
 
 Model (unchanged): **shared family household** — multiple members, EQUAL permissions; data shared

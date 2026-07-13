@@ -122,7 +122,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 - [X] T025 [P] Transport httptest: mã lỗi theo `contracts/transaction-api.md`; 404 ngoài hộ cho accounts/transactions — `src/api/module/*/transport/*_test.go`
 - [X] T026 [P] Vitest: form validation (thiếu tài khoản/danh mục, ngày tương lai), store xử lý conflict — `src/web/src/**/__tests__/`
 - [X] T027 Playwright e2e 23 kịch bản trong `src/web/e2e/` — multi-context #11/#13/#16–#18/#21 (Alice/Bob/Carol); #22 đối chiếu số dư qua `GET /api/accounts`; #23 offline (context.setOffline) → thử lại không trùng
-- [ ] T028 Chạy toàn bộ quickstart 001+002; cập nhật References/History các artifact theo `CLAUDE.md` (BR-002 → implemented nếu đủ; entity-model/data-model nếu lệch; chạy `/speckit-analyze`)
+- [X] T028 Chạy toàn bộ quickstart 001+002; cập nhật References/History các artifact theo `CLAUDE.md` (BR-002 → implemented nếu đủ; entity-model/data-model nếu lệch; chạy `/speckit-analyze`)
 
 ---
 

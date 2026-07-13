@@ -84,3 +84,4 @@ model **read-only**; index `idx_transactions_account(account_id)` phục vụ t�
 
 - v1 (2026-07-06): bản Supabase (users 0011 · accounts 0012 · transactions v2 0013) — xem git history.
 - v2 (2026-07-10): viết lại cho Go + Vue: users/nền tảng chuyển về 001; accounts + view + transactions v2 chuyển sang goose 00006/00007; trigger (`seed_default_account`, `enforce_txn_rules`, `touch_updated_at`) thay bằng app logic + biz + GORM hook (research D13/D15/D17); bỏ RLS/`security_invoker` — phạm vi hộ ở API.
+- v3 (2026-07-13, implement): **hiệu chỉnh thứ tự migration** — view `account_balances` được tạo trong `00007_transactions_v2.sql` (KHÔNG phải 00006) vì view tham chiếu `transactions.account_id` chỉ tồn tại sau khi 00007 thêm cột; 00006 chỉ tạo bảng `accounts` + index. Cấu trúc/ràng buộc thực thể không đổi.

@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-06
 
-**Status**: Draft
+**Status**: Implemented (Go + Vue) — 2026-07-13
 
 **Input**: User description: "@specs/business-requirements/BR-002.md — Ghi chép thu nhập và chi phí: nhập, chỉnh sửa, xóa giao dịch thu/chi nhanh chóng, chính xác trong sổ chung hộ gia đình; số dư tài khoản liên quan luôn được cập nhật đúng."
 
@@ -184,3 +184,4 @@ Người dùng đăng nhập vào hệ thống bằng email và mật khẩu c�
 - v3 (2026-07-09): review (`/speckit-specify review`) — thêm US1 #7 chặn ngày tương lai (khớp FR-005 / UC-TRK-02 E4 / quickstart #9); SC-006 chốt ngưỡng 5 giây (đề xuất, cần nghiệp vụ xác nhận); bỏ tên bảng/cột kỹ thuật khỏi Key Entities; thống nhất ngôn ngữ FR-008/FR-009; bổ sung khối References/Truy vết & History.
 - v4 (2026-07-10): re-platform Go+Vue — generalize các mô tả dính cơ chế stack cũ (đối chiếu phiên qua email, nơi lưu thông tin xác thực, backfill hồ sơ từ hệ xác thực cũ) thành trung lập; phạm vi & FR không đổi.
 - v5 (2026-07-13): thêm tham chiếu UI wireframes [`specs/design/design.html`](../design/design.html) (màn 2 · Nhập giao dịch, 3 · Danh sách giao dịch, 6 · Tài khoản/Ví) vào References; phạm vi & FR không đổi.
+- v6 (2026-07-13, implement): **Status → Implemented (Go + Vue).** 28/28 task ([`tasks.md`](tasks.md)) hoàn tất & kiểm chứng — module account (đọc + số dư view `account_balances`), vòng đời giao dịch đầy đủ (tạo/sửa/xóa với tài khoản bắt buộc, chặn ngày tương lai, mốc lạc quan `updated_at`), sổ chung phân trang + tên người nhập + realtime, tài khoản mặc định "Tiền mặt" seed theo hộ. US5 (định danh) kế thừa 001. Test xanh: Go unit + integration (view số dư reconcile, router 002), Vitest 20/20, Playwright e2e **33/33** (18 của 001 + 15 kịch bản 002 gồm multi-context #11/#13/#16–#18/#23). Còn mở (không cản MVP): quản lý tài khoản đầy đủ (CRUD, chuyển tiền) thuộc BR-005; baseline SC-002/SC-006 chờ nghiệp vụ.
