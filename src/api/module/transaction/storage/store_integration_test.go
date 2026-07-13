@@ -61,12 +61,22 @@ func newHousehold(t *testing.T, db *gorm.DB) (uuid.UUID, uuid.UUID) {
 		`INSERT INTO household_members (household_id, user_id) VALUES (?, ?)`, householdID, ownerID).Error)
 	t.Cleanup(func() {
 		db.Exec(`DELETE FROM transactions WHERE household_id = ?`, householdID)
+		db.Exec(`DELETE FROM accounts WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM categories WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM household_members WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM households WHERE id = ?`, householdID)
 		db.Exec(`DELETE FROM users WHERE id = ?`, ownerID)
 	})
 	return householdID, ownerID
+}
+
+// newAccount tạo một tài khoản CASH cho hộ (002: transactions.account_id NOT NULL).
+func newAccount(t *testing.T, db *gorm.DB, householdID uuid.UUID) uuid.UUID {
+	t.Helper()
+	id := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO accounts (id, household_id, name, type) VALUES (?, ?, 'Tiền mặt', 'CASH')`, id, householdID).Error)
+	return id
 }
 
 func TestTransactionListEmbedsNamesAndScopes(t *testing.T) {
@@ -83,15 +93,17 @@ func TestTransactionListEmbedsNamesAndScopes(t *testing.T) {
 	require.NoError(t, catStore.Create(ctx, cat))
 	otherCat := &categorymodel.Category{HouseholdID: otherHid, Name: "Hộ khác", Type: common.TypeExpense}
 	require.NoError(t, catStore.Create(ctx, otherCat))
+	acc := newAccount(t, db, hid)
+	otherAcc := newAccount(t, db, otherHid)
 
 	require.NoError(t, s.Create(ctx, &model.Transaction{
-		HouseholdID: hid, CreatedBy: alice, Amount: 45000, Type: common.TypeExpense, CategoryID: cat.ID,
+		HouseholdID: hid, CreatedBy: alice, Amount: 45000, Type: common.TypeExpense, CategoryID: cat.ID, AccountID: acc,
 	}))
 	require.NoError(t, s.Create(ctx, &model.Transaction{
-		HouseholdID: hid, CreatedBy: owner, Amount: 90000, Type: common.TypeExpense, CategoryID: cat.ID,
+		HouseholdID: hid, CreatedBy: owner, Amount: 90000, Type: common.TypeExpense, CategoryID: cat.ID, AccountID: acc,
 	}))
 	require.NoError(t, s.Create(ctx, &model.Transaction{
-		HouseholdID: otherHid, CreatedBy: otherOwner, Amount: 11111, Type: common.TypeExpense, CategoryID: otherCat.ID,
+		HouseholdID: otherHid, CreatedBy: otherOwner, Amount: 11111, Type: common.TypeExpense, CategoryID: otherCat.ID, AccountID: otherAcc,
 	}))
 
 	items, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50})

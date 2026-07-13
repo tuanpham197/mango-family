@@ -55,12 +55,29 @@ func newHousehold(t *testing.T, db *gorm.DB) (householdID, userID uuid.UUID) {
 	t.Cleanup(func() {
 		db.Exec(`DELETE FROM categorization_rules WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM transactions WHERE household_id = ?`, householdID)
+		db.Exec(`DELETE FROM accounts WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM categories WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM household_members WHERE household_id = ?`, householdID)
 		db.Exec(`DELETE FROM households WHERE id = ?`, householdID)
 		db.Exec(`DELETE FROM users WHERE id = ?`, userID)
 	})
 	return householdID, userID
+}
+
+// ensureAccount trả về id một tài khoản của hộ, tạo nếu chưa có
+// (002: transactions.account_id NOT NULL).
+func ensureAccount(t *testing.T, db *gorm.DB, householdID uuid.UUID) uuid.UUID {
+	t.Helper()
+	var idStr string
+	err := db.Raw(`SELECT id::text FROM accounts WHERE household_id = ? ORDER BY created_at LIMIT 1`, householdID).Scan(&idStr).Error
+	require.NoError(t, err)
+	if idStr != "" {
+		return uuid.MustParse(idStr)
+	}
+	id := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO accounts (id, household_id, name, type) VALUES (?, ?, 'Tiền mặt', 'CASH')`, id, householdID).Error)
+	return id
 }
 
 func mkCategory(t *testing.T, s *storage.SQLStore, hid uuid.UUID, name, typ string, parentID *uuid.UUID, hidden bool) *model.Category {
@@ -73,9 +90,10 @@ func mkCategory(t *testing.T, s *storage.SQLStore, hid uuid.UUID, name, typ stri
 func mkTransaction(t *testing.T, db *gorm.DB, hid, uid, catID uuid.UUID, typ string) uuid.UUID {
 	t.Helper()
 	id := uuid.New()
+	accID := ensureAccount(t, db, hid)
 	require.NoError(t, db.Exec(
-		`INSERT INTO transactions (id, household_id, created_by, amount, type, category_id) VALUES (?, ?, ?, 1000, ?, ?)`,
-		id, hid, uid, typ, catID).Error)
+		`INSERT INTO transactions (id, household_id, created_by, amount, type, category_id, account_id) VALUES (?, ?, ?, 1000, ?, ?, ?)`,
+		id, hid, uid, typ, catID, accID).Error)
 	return id
 }
 

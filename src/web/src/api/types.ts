@@ -31,6 +31,15 @@ export interface CategoryTree extends Category {
   children: Category[]
 }
 
+export type AccountType = 'CASH' | 'BANK' | 'EWALLET' | 'CREDIT'
+
+export interface Account {
+  id: string
+  name: string
+  type: AccountType
+  balance: number
+}
+
 export interface Transaction {
   id: string
   household_id: string
@@ -38,9 +47,12 @@ export interface Transaction {
   amount: number
   type: CategoryType
   category_id: string
+  account_id: string
   description: string | null
   transaction_date: string
+  updated_at: string
   category_name?: string
+  account_name?: string
   created_by_name?: string
 }
 

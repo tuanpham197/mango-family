@@ -29,6 +29,21 @@ export async function login(page: Page, email: string, password = DEV_PASSWORD) 
   await expect(page.getByTestId('household-name')).toBeVisible()
 }
 
+/** Tạo giao dịch qua UI form (002): account chọn sẵn khi hộ có 1 tài khoản. */
+export async function createTransaction(
+  page: Page,
+  opts: { amount: number; type?: 'EXPENSE' | 'INCOME'; category: string; description?: string },
+) {
+  await page.goto('/transactions/new')
+  if (opts.type === 'INCOME') await page.getByTestId('type-income').click()
+  else await page.getByTestId('type-expense').click()
+  await page.getByTestId('amount-input').fill(String(opts.amount))
+  if (opts.description) await page.getByTestId('description-input').fill(opts.description)
+  await page.getByTestId(`category-option-${opts.category}`).click()
+  await page.getByTestId('save-transaction').click()
+  await expect(page).toHaveURL(/\/$/)
+}
+
 /** Tạo danh mục qua UI form; đợi lưu xong (điều hướng về /categories) rồi mới trả về. */
 export async function createCategory(
   page: Page,
