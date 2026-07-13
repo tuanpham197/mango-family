@@ -113,11 +113,11 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Purpose**: Test tự động các tầng, e2e Playwright, đồng bộ tài liệu.
 
-- [ ] T030 [P] Unit biz (Go): validate category/transaction, suggest, delete-reassign, conflict — `src/api/module/category/biz/*_test.go`, `src/api/module/transaction/biz/*_test.go` (storage mock qua interface)
-- [ ] T031 [P] Integration storage (Go, Postgres docker + goose up): scope hộ, cây cha/con, delete-reassign nguyên tử, conditional update — `src/api/module/*/storage/*_integration_test.go` (tag `integration`)
-- [ ] T032 [P] Transport + middleware (httptest): 401 chưa đăng nhập, 404 ngoài hộ, mã lỗi contract — `src/api/middleware/*_test.go`, `src/api/module/*/transport/*_test.go`
-- [ ] T033 [P] Web unit (Vitest): categories store, CategoryPicker filter, form validation — `src/web/src/**/__tests__/`
-- [ ] T034 Playwright e2e 18 kịch bản (#0–#17) trong `src/web/e2e/` — multi-context cho #13–#17 (Alice/Bob/Carol); assert đồng bộ ≤ 5s (#13)
+- [X] T030 [P] Unit biz (Go): validate category/transaction, suggest, delete-reassign, conflict — `src/api/module/category/biz/*_test.go`, `src/api/module/transaction/biz/*_test.go` (storage mock qua interface)
+- [X] T031 [P] Integration storage (Go, Postgres docker + goose up): scope hộ, cây cha/con, delete-reassign nguyên tử, conditional update — `src/api/module/*/storage/*_integration_test.go` (tag `integration`)
+- [X] T032 [P] Transport + middleware (httptest): 401 chưa đăng nhập, 404 ngoài hộ, mã lỗi contract — `src/api/middleware/*_test.go` + integration router-level `src/api/main_integration_test.go` (401/404/409 + mã lỗi contract)
+- [X] T033 [P] Web unit (Vitest): categories store getters (pickable/byType/findById), CategoryPicker filter+emit, api client error parsing — `src/web/src/**/__tests__/` (11 test pass)
+- [X] T034 Playwright e2e 18 kịch bản (#0–#17) trong `src/web/e2e/` — multi-context cho #13/#14/#16 (Alice/Bob/Carol); assert đồng bộ ≤ 5s (#13). **18/18 pass.**
 - [ ] T035 Chạy toàn bộ quickstart, cập nhật References/History các artifact theo `CLAUDE.md` (BR-001 → implemented nếu đủ; chạy `/speckit-analyze`)
 
 ---

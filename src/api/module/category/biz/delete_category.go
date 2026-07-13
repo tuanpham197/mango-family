@@ -38,9 +38,9 @@ func (f TxRunnerFunc) InTx(ctx context.Context, fn func(s DeleteStore) error) er
 }
 
 const (
-	DeleteModeReassign     = "reassign"
-	DeleteModeDeleteAll    = "delete_transactions"
-	deleteModeUnspecified  = ""
+	DeleteModeReassign    = "reassign"
+	DeleteModeDeleteAll   = "delete_transactions"
+	deleteModeUnspecified = ""
 )
 
 type DeleteCategoryInput struct {
