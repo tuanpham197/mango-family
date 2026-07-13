@@ -101,9 +101,9 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Independent Test**: quickstart #12.
 
-- [ ] T027 [P] [US4] Storage rules + biz SuggestCategory trong `src/api/module/category/{storage/rule_storage.go,biz/suggest_category.go}`: normalize mô tả, match keyword cùng hộ + cùng loại, ưu tiên match_count — `GET /api/categories/suggest` (D7)
-- [ ] T028 [US4] Học lịch sử: sau CreateTransaction có description, upsert rule (unique household+keyword+category, match_count++) trong `src/api/module/transaction/biz/create_transaction.go` (phụ thuộc T016, T027)
-- [ ] T029 [US4] Web: component `src/web/src/components/SuggestionChip.vue` trong TransactionEntryView (chấp nhận điền sẵn / chọn khác thì ghi đè)
+- [X] T027 [P] [US4] Storage rules + biz SuggestCategory trong `src/api/module/category/{storage/rule_storage.go,biz/suggest_category.go}`: normalize mô tả, match keyword cùng hộ + cùng loại, ưu tiên match_count — `GET /api/categories/suggest` (D7)
+- [X] T028 [US4] Học lịch sử: sau CreateTransaction có description, upsert rule (unique household+keyword+category, match_count++) trong `src/api/module/transaction/biz/create_transaction.go` (phụ thuộc T016, T027)
+- [X] T029 [US4] Web: component `src/web/src/components/SuggestionChip.vue` trong TransactionEntryView (chấp nhận điền sẵn / chọn khác thì ghi đè)
 
 **Checkpoint**: Cả 4 user story hoạt động độc lập.
 

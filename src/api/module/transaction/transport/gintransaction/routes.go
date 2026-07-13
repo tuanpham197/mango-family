@@ -32,9 +32,11 @@ func Create(ac appctx.AppContext) gin.HandlerFunc {
 			common.WriteError(c, common.NewBadRequest("body không hợp lệ"))
 			return
 		}
+		catStore := categorystorage.NewSQLStore(ac.GetDB())
 		biz := transactionbiz.NewCreateTransactionBiz(
-			categorystorage.NewSQLStore(ac.GetDB()),
+			catStore,
 			transactionstorage.NewSQLStore(ac.GetDB()),
+			catStore, // học rule gợi ý từ mô tả (US4, D7)
 		)
 		householdID := middleware.HouseholdID(c)
 		t, err := biz.Create(c.Request.Context(), householdID, middleware.CurrentUser(c).ID, transactionbiz.CreateTransactionInput{

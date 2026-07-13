@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ApiError } from '../api/client'
 import type { CategoryType } from '../api/types'
 import CategoryPicker from '../components/CategoryPicker.vue'
+import SuggestionChip from '../components/SuggestionChip.vue'
 import { useCategoriesStore } from '../stores/categories'
 import { useTransactionsStore } from '../stores/transactions'
 import { useInvalidation } from '../composables/useInvalidation'
@@ -120,6 +121,12 @@ async function submit() {
         <label for="description">Ghi chú</label>
         <input id="description" v-model="description" type="text" maxlength="255" data-testid="description-input" />
         <p v-if="fieldErrors.description" class="field-error">{{ fieldErrors.description }}</p>
+        <SuggestionChip
+          :type="type"
+          :description="description"
+          :selected-id="categoryId"
+          @apply="categoryId = $event"
+        />
       </div>
 
       <button class="btn btn-primary btn-block" type="submit" :disabled="busy" data-testid="save-transaction">

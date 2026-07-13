@@ -25,6 +25,7 @@ func registerRoutes(r *gin.Engine, ac appctx.AppContext) {
 	// Authenticated + household scope (mọi resource theo hộ — D5)
 	scoped := authed.Group("", middleware.RequireHousehold(ac))
 	scoped.GET("/categories", gincategory.List(ac))
+	scoped.GET("/categories/suggest", gincategory.Suggest(ac))
 	scoped.POST("/categories", gincategory.Create(ac))
 	scoped.PATCH("/categories/:id", gincategory.Update(ac))
 	scoped.DELETE("/categories/:id", gincategory.Delete(ac))
