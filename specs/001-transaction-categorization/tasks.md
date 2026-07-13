@@ -22,10 +22,10 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Purpose**: Khung monorepo Go + Vue + Postgres dev.
 
-- [ ] T001 Scaffold monorepo: `src/api` (go mod init, `main.go`, `main_route.go`, `.env.example`, `.air.toml`, `Dockerfile`), `src/web` (Vite + Vue 3 + TS + Pinia + Vue Router), `src/db/migrations/`, `src/docker-compose.yml` (Postgres 16)
-- [ ] T002 [P] Common package theo mẫu learn_go: `src/api/common/{app_error.go,app_response.go,paging.go,sql_model.go,const.go}` (format lỗi `{error:{code,message,field?}}` — contracts/category-api.md)
-- [ ] T003 [P] App context `src/api/component/appctx/app_context.go` (GORM db, secret, pubsub, wshub — interface để inject vào transport)
-- [ ] T004 [P] Web nền: Vite proxy `/api` + `/ws` → :8080 trong `src/web/vite.config.ts`; fetch wrapper + parse app_response trong `src/web/src/api/client.ts`; layout mobile-first + router khung trong `src/web/src/router/index.ts`
+- [X] T001 Scaffold monorepo: `src/api` (go mod init, `main.go`, `main_route.go`, `.env.example`, `.air.toml`, `Dockerfile`), `src/web` (Vite + Vue 3 + TS + Pinia + Vue Router), `src/db/migrations/`, `src/docker-compose.yml` (Postgres 16)
+- [X] T002 [P] Common package theo mẫu learn_go: `src/api/common/{app_error.go,app_response.go,paging.go,sql_model.go,const.go}` (format lỗi `{error:{code,message,field?}}` — contracts/category-api.md)
+- [X] T003 [P] App context `src/api/component/appctx/app_context.go` (GORM db, secret, pubsub, wshub — interface để inject vào transport)
+- [X] T004 [P] Web nền: Vite proxy `/api` + `/ws` → :8080 trong `src/web/vite.config.ts`; fetch wrapper + parse app_response trong `src/web/src/api/client.ts`; layout mobile-first + router khung trong `src/web/src/router/index.ts`
 
 ---
 
@@ -35,15 +35,15 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **⚠️ CRITICAL**: Không bắt đầu US nào trước khi phase này xong. Migrations áp theo thứ tự 00001 → 00005.
 
-- [ ] T005 Goose migrations theo `contracts/db-schema.sql`: `src/db/migrations/00001_users.sql`, `00002_households.sql` (+`household_members`), `00003_categories.sql`, `00004_transactions_min.sql`, `00005_categorization_rules.sql` (mỗi file `-- +goose Up/Down`; CHECK/FK/UNIQUE/index như contract)
-- [ ] T006 [P] `src/api/component/hasher/bcrypt.go` (bcrypt — KHÔNG md5) và `src/api/component/tokenprovider/jwt/jwt.go` (HS256, hạn 7d, secret env — research D4)
-- [ ] T007 Module user: `src/api/module/user/{model,storage,biz,transport/ginuser}/` — `POST /api/auth/login` (401 INVALID_CREDENTIALS), `POST /api/auth/logout`, `GET /api/me` (409 NO_HOUSEHOLD khi chưa thuộc hộ) theo contracts/category-api.md §Auth (phụ thuộc T005, T006)
-- [ ] T008 Middleware `src/api/middleware/{authenticate.go,household_scope.go,recover.go}`: JWT cookie → user; tra membership gắn `household_id` vào context; ngoài hộ → 404 (research D5)
-- [ ] T009 Module household: `src/api/module/household/{model,storage,biz}/` — membership + hàm `SeedDefaultCategories(householdID)` (bộ mặc định research D9, `is_default=true`)
-- [ ] T010 Seed dev `src/api/cmd/seed/main.go`: Alice/Bob (hộ "Gia đình A"), Carol (hộ "Gia đình B"), mật khẩu `Password123!`, gọi SeedDefaultCategories cho mỗi hộ (KHÔNG phải migration — D9)
-- [ ] T011 Realtime: `src/api/component/{pubsub,subscriber,wshub}/` — local pubsub → hub WS theo household; endpoint `WS /ws` (auth cookie khi handshake) phát `categories_changed`/`transactions_changed` (D8)
-- [ ] T012 [P] Web auth: store `src/web/src/stores/auth.ts` + view `src/web/src/views/LoginView.vue` + router guard (chưa đăng nhập → /login; bootstrap qua GET /api/me)
-- [ ] T013 [P] Web WS client: composable `src/web/src/composables/useInvalidation.ts` (kết nối /ws, reconnect, nhận event → refetch store tương ứng; fallback refetch khi tab focus)
+- [X] T005 Goose migrations theo `contracts/db-schema.sql`: `src/db/migrations/00001_users.sql`, `00002_households.sql` (+`household_members`), `00003_categories.sql`, `00004_transactions_min.sql`, `00005_categorization_rules.sql` (mỗi file `-- +goose Up/Down`; CHECK/FK/UNIQUE/index như contract)
+- [X] T006 [P] `src/api/component/hasher/bcrypt.go` (bcrypt — KHÔNG md5) và `src/api/component/tokenprovider/jwt/jwt.go` (HS256, hạn 7d, secret env — research D4)
+- [X] T007 Module user: `src/api/module/user/{model,storage,biz,transport/ginuser}/` — `POST /api/auth/login` (401 INVALID_CREDENTIALS), `POST /api/auth/logout`, `GET /api/me` (409 NO_HOUSEHOLD khi chưa thuộc hộ) theo contracts/category-api.md §Auth (phụ thuộc T005, T006)
+- [X] T008 Middleware `src/api/middleware/{authenticate.go,household_scope.go,recover.go}`: JWT cookie → user; tra membership gắn `household_id` vào context; ngoài hộ → 404 (research D5)
+- [X] T009 Module household: `src/api/module/household/{model,storage,biz}/` — membership + hàm `SeedDefaultCategories(householdID)` (bộ mặc định research D9, `is_default=true`)
+- [X] T010 Seed dev `src/api/cmd/seed/main.go`: Alice/Bob (hộ "Gia đình A"), Carol (hộ "Gia đình B"), mật khẩu `Password123!`, gọi SeedDefaultCategories cho mỗi hộ (KHÔNG phải migration — D9)
+- [X] T011 Realtime: `src/api/component/{pubsub,subscriber,wshub}/` — local pubsub → hub WS theo household; endpoint `WS /ws` (auth cookie khi handshake) phát `categories_changed`/`transactions_changed` (D8)
+- [X] T012 [P] Web auth: store `src/web/src/stores/auth.ts` + view `src/web/src/views/LoginView.vue` + router guard (chưa đăng nhập → /login; bootstrap qua GET /api/me)
+- [X] T013 [P] Web WS client: composable `src/web/src/composables/useInvalidation.ts` (kết nối /ws, reconnect, nhận event → refetch store tương ứng; fallback refetch khi tab focus)
 
 **Checkpoint**: `go run ./cmd/seed` + login Alice qua UI hoạt động (quickstart #0) — nền tảng sẵn sàng.
 
@@ -55,12 +55,12 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Independent Test**: quickstart #5, #6 (lọc theo loại; chặn lưu thiếu danh mục) + #14 (authorship).
 
-- [ ] T014 [P] [US1] Module category (đọc): `src/api/module/category/{model,storage}/` — model GORM + storage list theo (household, type, include_hidden), dựng cây cha/con
-- [ ] T015 [US1] Biz + transport: `src/api/module/category/biz/list_categories.go` + `transport/gincategory/list.go` — `GET /api/categories` (contracts §Categories) (phụ thuộc T014)
-- [ ] T016 [US1] Module transaction (tối thiểu): `src/api/module/transaction/{model,storage,biz,transport}/` — `POST /api/transactions` validate amount > 0, description ≤ 255, category bắt buộc + cùng loại + cùng hộ (CATEGORY_REQUIRED / CATEGORY_TYPE_MISMATCH / AMOUNT_INVALID / DESCRIPTION_TOO_LONG); `created_by` từ phiên; publish `transactions_changed`
-- [ ] T017 [US1] `GET /api/transactions` (paging 50, embed `category_name` + `created_by_name`) trong `src/api/module/transaction/{storage,transport}/list.go`
-- [ ] T018 [P] [US1] Web: store `src/web/src/stores/categories.ts` + component `src/web/src/components/CategoryPicker.vue` (lọc theo loại, nhóm cha/con, loại trừ hidden)
-- [ ] T019 [US1] Web: view `src/web/src/views/TransactionEntryView.vue` (chọn loại → picker lọc; chặn lưu thiếu danh mục; hiển thị lỗi theo trường) + `src/web/src/views/LedgerView.vue` tối thiểu (mới nhất trước, tên người nhập) + store `src/web/src/stores/transactions.ts`
+- [X] T014 [P] [US1] Module category (đọc): `src/api/module/category/{model,storage}/` — model GORM + storage list theo (household, type, include_hidden), dựng cây cha/con
+- [X] T015 [US1] Biz + transport: `src/api/module/category/biz/list_categories.go` + `transport/gincategory/list.go` — `GET /api/categories` (contracts §Categories) (phụ thuộc T014)
+- [X] T016 [US1] Module transaction (tối thiểu): `src/api/module/transaction/{model,storage,biz,transport}/` — `POST /api/transactions` validate amount > 0, description ≤ 255, category bắt buộc + cùng loại + cùng hộ (CATEGORY_REQUIRED / CATEGORY_TYPE_MISMATCH / AMOUNT_INVALID / DESCRIPTION_TOO_LONG); `created_by` từ phiên; publish `transactions_changed`
+- [X] T017 [US1] `GET /api/transactions` (paging 50, embed `category_name` + `created_by_name`) trong `src/api/module/transaction/{storage,transport}/list.go`
+- [X] T018 [P] [US1] Web: store `src/web/src/stores/categories.ts` + component `src/web/src/components/CategoryPicker.vue` (lọc theo loại, nhóm cha/con, loại trừ hidden)
+- [X] T019 [US1] Web: view `src/web/src/views/TransactionEntryView.vue` (chọn loại → picker lọc; chặn lưu thiếu danh mục; hiển thị lỗi theo trường) + `src/web/src/views/LedgerView.vue` tối thiểu (mới nhất trước, tên người nhập) + store `src/web/src/stores/transactions.ts`
 
 **Checkpoint**: US1 pass quickstart #5/#6/#14 — MVP demo được (đăng nhập → nhập giao dịch có danh mục đúng loại).
 
@@ -72,11 +72,11 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Independent Test**: quickstart #1–#4, #8–#11, #16, #17.
 
-- [ ] T020 [P] [US2] Biz CreateCategory trong `src/api/module/category/biz/create_category.go`: type bắt buộc; cảnh báo trùng tên (NAME_DUPLICATE_WARNING + `confirm_duplicate`) — `POST /api/categories`
-- [ ] T021 [US2] Biz UpdateCategory trong `src/api/module/category/biz/update_category.go`: name/icon/is_hidden; TYPE_IMMUTABLE khi gửi type; mốc `expected_updated_at` → CONCURRENCY_CONFLICT (409) / RECORD_GONE (404) (D6) — `PATCH /api/categories/:id`
-- [ ] T022 [US2] Biz DeleteCategory trong `src/api/module/category/biz/delete_category.go`: MỘT DB transaction — kiểm đích cùng loại/cùng hộ (REASSIGN_TYPE_MISMATCH), xử lý con (FR-012), gán lại hoặc xóa giao dịch, xóa danh mục; thiếu mode khi còn giao dịch → CATEGORY_HAS_TRANSACTIONS + counts (D12) — `DELETE /api/categories/:id`; mọi mutation publish `categories_changed`
-- [ ] T023 [P] [US2] Web: views `src/web/src/views/{CategoryManageView,CategoryFormView}.vue` (tạo/sửa/ẩn; dialog xác nhận trùng tên; xử lý conflict → tải lại)
-- [ ] T024 [US2] Web: component `src/web/src/components/DeleteReassignDialog.vue` (chọn đích cùng loại; hiện số giao dịch/con bị ảnh hưởng; xử lý RECORD_GONE)
+- [X] T020 [P] [US2] Biz CreateCategory trong `src/api/module/category/biz/create_category.go`: type bắt buộc; cảnh báo trùng tên (NAME_DUPLICATE_WARNING + `confirm_duplicate`) — `POST /api/categories`
+- [X] T021 [US2] Biz UpdateCategory trong `src/api/module/category/biz/update_category.go`: name/icon/is_hidden; TYPE_IMMUTABLE khi gửi type; mốc `expected_updated_at` → CONCURRENCY_CONFLICT (409) / RECORD_GONE (404) (D6) — `PATCH /api/categories/:id`
+- [X] T022 [US2] Biz DeleteCategory trong `src/api/module/category/biz/delete_category.go`: MỘT DB transaction — kiểm đích cùng loại/cùng hộ (REASSIGN_TYPE_MISMATCH), xử lý con (FR-012), gán lại hoặc xóa giao dịch, xóa danh mục; thiếu mode khi còn giao dịch → CATEGORY_HAS_TRANSACTIONS + counts (D12) — `DELETE /api/categories/:id`; mọi mutation publish `categories_changed`
+- [X] T023 [P] [US2] Web: views `src/web/src/views/{CategoryManageView,CategoryFormView}.vue` (tạo/sửa/ẩn; dialog xác nhận trùng tên; xử lý conflict → tải lại)
+- [X] T024 [US2] Web: component `src/web/src/components/DeleteReassignDialog.vue` (chọn đích cùng loại; hiện số giao dịch/con bị ảnh hưởng; xử lý RECORD_GONE)
 
 **Checkpoint**: US1 + US2 độc lập — quản lý danh mục đầy đủ, đồng bộ giữa thành viên ≤ 5s.
 
@@ -88,8 +88,8 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 
 **Independent Test**: quickstart #7.
 
-- [ ] T025 [US3] Mở rộng biz Create/Update category trong `src/api/module/category/biz/`: `parent_id` phải là danh mục gốc (NESTING_TOO_DEEP), con kế thừa type cha (PARENT_TYPE_MISMATCH nếu lệch) — FR-010/011
-- [ ] T026 [US3] Web: CategoryFormView hỗ trợ chọn cha (khóa loại theo cha); CategoryPicker/Manage hiển thị nhóm cha → con; gán giao dịch vào cha trực tiếp vẫn hợp lệ (FR-019)
+- [X] T025 [US3] Mở rộng biz Create/Update category trong `src/api/module/category/biz/`: `parent_id` phải là danh mục gốc (NESTING_TOO_DEEP), con kế thừa type cha (PARENT_TYPE_MISMATCH nếu lệch) — FR-010/011 *(gộp trong create_category.go — đã verify NESTING_TOO_DEEP / PARENT_TYPE_MISMATCH / kế thừa loại)*
+- [X] T026 [US3] Web: CategoryFormView hỗ trợ chọn cha (khóa loại theo cha); CategoryPicker/Manage hiển thị nhóm cha → con; gán giao dịch vào cha trực tiếp vẫn hợp lệ (FR-019)
 
 **Checkpoint**: US1–US3 độc lập.
 
