@@ -3,6 +3,7 @@ package main
 import (
 	"household-finance/api/component/appctx"
 	"household-finance/api/middleware"
+	"household-finance/api/module/account/transport/ginaccount"
 	"household-finance/api/module/category/transport/gincategory"
 	"household-finance/api/module/transaction/transport/gintransaction"
 	"household-finance/api/module/user/transport/ginuser"
@@ -29,8 +30,12 @@ func registerRoutes(r *gin.Engine, ac appctx.AppContext) {
 	scoped.POST("/categories", gincategory.Create(ac))
 	scoped.PATCH("/categories/:id", gincategory.Update(ac))
 	scoped.DELETE("/categories/:id", gincategory.Delete(ac))
+	scoped.GET("/accounts", ginaccount.List(ac))
 	scoped.POST("/transactions", gintransaction.Create(ac))
 	scoped.GET("/transactions", gintransaction.List(ac))
+	scoped.GET("/transactions/:id", gintransaction.Get(ac))
+	scoped.PATCH("/transactions/:id", gintransaction.Update(ac))
+	scoped.DELETE("/transactions/:id", gintransaction.Delete(ac))
 
 	// WebSocket invalidation hub (D8)
 	r.GET("/ws", middleware.Authenticate(ac), middleware.RequireHousehold(ac), func(c *gin.Context) {

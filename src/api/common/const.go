@@ -23,6 +23,19 @@ const (
 	ErrCodeCategoryTypeMismatch = "CATEGORY_TYPE_MISMATCH"
 	ErrCodeAmountInvalid        = "AMOUNT_INVALID"
 	ErrCodeDescriptionTooLong   = "DESCRIPTION_TOO_LONG"
+
+	// Transaction lifecycle (002)
+	ErrCodeAccountRequired          = "ACCOUNT_REQUIRED"
+	ErrCodeAccountHouseholdMismatch = "ACCOUNT_HOUSEHOLD_MISMATCH"
+	ErrCodeFutureDateNotAllowed     = "FUTURE_DATE_NOT_ALLOWED"
+)
+
+// Account types (002 — BR-ACC-001)
+const (
+	AccountTypeCash    = "CASH"
+	AccountTypeBank    = "BANK"
+	AccountTypeEWallet = "EWALLET"
+	AccountTypeCredit  = "CREDIT"
 )
 
 // WebSocket/pubsub event topics

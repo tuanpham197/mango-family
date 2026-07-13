@@ -48,8 +48,8 @@ func main() {
 	must(hstore.AddMember(ctx, houseA.ID, bob.ID))
 	must(hstore.AddMember(ctx, houseB.ID, carol.ID))
 
-	must(householdbiz.SeedDefaultCategories(ctx, db, houseA.ID, alice.ID))
-	must(householdbiz.SeedDefaultCategories(ctx, db, houseB.ID, carol.ID))
+	must(householdbiz.SeedDefaults(ctx, db, houseA.ID, alice.ID))
+	must(householdbiz.SeedDefaults(ctx, db, houseB.ID, carol.ID))
 
 	fmt.Println("Seed xong:")
 	fmt.Println("  Hộ A:", houseA.ID, "— alice@dev.local + bob@dev.local /", devPassword)

@@ -22,8 +22,8 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **Purpose**: Mã lỗi mới + khung module account.
 
-- [ ] T001 Bổ sung mã lỗi 002 vào `src/api/common/const.go`: `ACCOUNT_REQUIRED`, `ACCOUNT_HOUSEHOLD_MISMATCH`, `FUTURE_DATE_NOT_ALLOWED` (bộ lỗi chung CONCURRENCY_CONFLICT/RECORD_GONE đã có từ 001)
-- [ ] T002 [P] Scaffold `src/api/module/account/{model,storage,biz,transport/ginaccount}/` (khung theo mẫu learn_go)
+- [X] T001 Bổ sung mã lỗi 002 vào `src/api/common/const.go`: `ACCOUNT_REQUIRED`, `ACCOUNT_HOUSEHOLD_MISMATCH`, `FUTURE_DATE_NOT_ALLOWED` (bộ lỗi chung CONCURRENCY_CONFLICT/RECORD_GONE đã có từ 001)
+- [X] T002 [P] Scaffold `src/api/module/account/{model,storage,biz,transport/ginaccount}/` (khung theo mẫu learn_go)
 
 ---
 
@@ -33,13 +33,13 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **⚠️ CRITICAL**: Không bắt đầu US nào trước khi phase này xong. Thứ tự migration: **T003 (00006) → T004 (00007)**.
 
-- [ ] T003 Goose migration `src/db/migrations/00006_accounts.sql`: bảng `accounts` (CHECK type, index household) + view **`account_balances`** (bọc `-- +goose StatementBegin/End`) theo `contracts/db-schema.sql` (D13, D14)
-- [ ] T004 Goose migration `src/db/migrations/00007_transactions_v2.sql`: `account_id` (nullable → backfill về tài khoản mặc định của hộ → NOT NULL, FK restrict) + `updated_at` + `idx_transactions_account` (D17)
-- [ ] T005 Mở rộng `SeedDefaults` trong `src/api/module/household/biz/seed_defaults.go`: tạo tài khoản mặc định **"Tiền mặt" (CASH)** cùng chỗ seed danh mục (D13); `src/api/cmd/seed/main.go` backfill cho hộ dev
-- [ ] T006 Module account: model GORM (+ model read-only `AccountBalance` map view) trong `src/api/module/account/model/`; storage list theo hộ join balance; biz `ListAccounts`; transport `GET /api/accounts` (contracts §Accounts)
-- [ ] T007 Mở rộng transaction model `src/api/module/transaction/model/transaction.go`: `account_id`, `updated_at` (GORM hook làm mới khi update — D17); embed thêm `account_name` trong response
+- [X] T003 Goose migration `src/db/migrations/00006_accounts.sql`: bảng `accounts` (CHECK type, index household) + view **`account_balances`** (bọc `-- +goose StatementBegin/End`) theo `contracts/db-schema.sql` (D13, D14)
+- [X] T004 Goose migration `src/db/migrations/00007_transactions_v2.sql`: `account_id` (nullable → backfill về tài khoản mặc định của hộ → NOT NULL, FK restrict) + `updated_at` + `idx_transactions_account` (D17)
+- [X] T005 Mở rộng `SeedDefaults` trong `src/api/module/household/biz/seed_defaults.go`: tạo tài khoản mặc định **"Tiền mặt" (CASH)** cùng chỗ seed danh mục (D13); `src/api/cmd/seed/main.go` backfill cho hộ dev
+- [X] T006 Module account: model GORM (+ model read-only `AccountBalance` map view) trong `src/api/module/account/model/`; storage list theo hộ join balance; biz `ListAccounts`; transport `GET /api/accounts` (contracts §Accounts)
+- [X] T007 Mở rộng transaction model `src/api/module/transaction/model/transaction.go`: `account_id`, `updated_at` (GORM hook làm mới khi update — D17); embed thêm `account_name` trong response
 - [ ] T008 [P] Web: store `src/web/src/stores/accounts.ts` + component `src/web/src/components/AccountBalanceChip.vue` (hiển thị số dư từ GET /api/accounts)
-- [ ] T009 Subscriber `src/api/component/subscriber/`: mọi mutation transaction publish thêm `accounts_changed` (số dư đổi theo — contracts §WebSocket); web `useInvalidation` refetch accounts store
+- [X] T009 Subscriber `src/api/component/subscriber/`: mọi mutation transaction publish thêm `accounts_changed` (số dư đổi theo — contracts §WebSocket); web `useInvalidation` refetch accounts store
 
 **Checkpoint**: goose up + seed xong — mỗi hộ có "Tiền mặt", `GET /api/accounts` trả balance 0.
 
@@ -63,8 +63,8 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **Independent Test**: quickstart #4–#10, #23.
 
-- [ ] T011 [P] [US1] Mở rộng biz `src/api/module/transaction/biz/create_transaction.go`: `account_id` bắt buộc + cùng hộ (ACCOUNT_REQUIRED/ACCOUNT_HOUSEHOLD_MISMATCH); chặn `transaction_date > now()+1d` (FUTURE_DATE_NOT_ALLOWED — D15); giữ nguyên validate 001 (amount/category/description)
-- [ ] T012 [US1] Transport POST cập nhật body theo `contracts/transaction-api.md`; publish `transactions_changed` + `accounts_changed` (phụ thuộc T009, T011)
+- [X] T011 [P] [US1] Mở rộng biz `src/api/module/transaction/biz/create_transaction.go`: `account_id` bắt buộc + cùng hộ (ACCOUNT_REQUIRED/ACCOUNT_HOUSEHOLD_MISMATCH); chặn `transaction_date > now()+1d` (FUTURE_DATE_NOT_ALLOWED — D15); giữ nguyên validate 001 (amount/category/description)
+- [X] T012 [US1] Transport POST cập nhật body theo `contracts/transaction-api.md`; publish `transactions_changed` + `accounts_changed` (phụ thuộc T009, T011)
 - [ ] T013 [US1] Web: `src/web/src/views/TransactionFormView.vue` (chế độ TẠO) — số tiền, loại Thu/Chi, `CategoryPicker` + `SuggestionChip` tái dùng từ 001, chọn tài khoản (chọn sẵn khi hộ chỉ có 1 — FR-006), date picker `max = hôm nay`, mô tả `maxlength=255`, lỗi theo trường; **thay** TransactionEntryView tối thiểu của 001 (route cũ trỏ về form mới)
 - [ ] T014 [US1] Store `src/web/src/stores/transactions.ts`: submit + refetch sổ/balances sau lưu; **chống double-submit** (disable khi pending; thử lại sau lỗi mạng không tạo trùng — quickstart #23)
 
@@ -78,7 +78,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **Independent Test**: quickstart #11–#13.
 
-- [ ] T015 [P] [US2] Mở rộng storage/biz list `src/api/module/transaction/storage/list.go`: embed `users(display_name)` + `categories(name,icon)` + `accounts(name)` một round-trip; `ORDER BY transaction_date DESC, id DESC`; paging offset 50 + total (D16)
+- [X] T015 [P] [US2] Mở rộng storage/biz list `src/api/module/transaction/storage/list.go`: embed `users(display_name)` + `categories(name,icon)` + `accounts(name)` một round-trip; `ORDER BY transaction_date DESC, id DESC`; paging offset 50 + total (D16)
 - [ ] T016 [US2] Web: nâng cấp `src/web/src/views/LedgerView.vue` thành sổ chính thức — infinite scroll, mỗi dòng số tiền/loại/danh mục/ngày/**tên người nhập** (email nếu thiếu tên), empty state hướng đi nhập, realtime refetch qua `useInvalidation` (≤ 5s — SC-006)
 - [ ] T017 [US2] Router `src/web/src/router/index.ts`: Ledger làm màn hình chính `/`; app bar điều hướng Quản lý danh mục + Nhập giao dịch + badge người dùng/đăng xuất
 
@@ -92,7 +92,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **Independent Test**: quickstart #14–#18.
 
-- [ ] T018 [P] [US3] Biz `src/api/module/transaction/biz/update_transaction.go`: validate như tạo mới + mốc `expected_updated_at` — conditional UPDATE, phân biệt CONCURRENCY_CONFLICT (409, kèm data mới nhất) vs RECORD_GONE (404) (D17); thêm `GET /api/transactions/:id` + `PATCH` trong transport
+- [X] T018 [P] [US3] Biz `src/api/module/transaction/biz/update_transaction.go`: validate như tạo mới + mốc `expected_updated_at` — conditional UPDATE, phân biệt CONCURRENCY_CONFLICT (409, kèm data mới nhất) vs RECORD_GONE (404) (D17); thêm `GET /api/transactions/:id` + `PATCH` trong transport
 - [ ] T019 [US3] Web: `TransactionFormView` chế độ SỬA — prefill qua GET /:id; đổi loại → `CategoryPicker` coi danh mục cũ là "chưa chọn" (D18); xử lý CONCURRENCY_CONFLICT (hiện dữ liệu mới, cho sửa tiếp) và RECORD_GONE (thông báo + về sổ) trong `src/web/src/views/TransactionFormView.vue`
 - [ ] T020 [US3] Điểm vào sửa từ sổ (tap dòng giao dịch → form sửa) trong `src/web/src/views/LedgerView.vue`
 
@@ -106,7 +106,7 @@ description: "Task list — Ghi chép thu nhập & chi phí (Go + Vue re-impleme
 
 **Independent Test**: quickstart #19–#21.
 
-- [ ] T021 [P] [US4] Biz `src/api/module/transaction/biz/delete_transaction.go`: DELETE theo id (+`expected_updated_at` nếu có); 0 hàng → RECORD_GONE (thông báo nhẹ); publish 2 event; transport `DELETE /api/transactions/:id`
+- [X] T021 [P] [US4] Biz `src/api/module/transaction/biz/delete_transaction.go`: DELETE theo id (+`expected_updated_at` nếu có); 0 hàng → RECORD_GONE (thông báo nhẹ); publish 2 event; transport `DELETE /api/transactions/:id`
 - [ ] T022 [US4] Web: `src/web/src/components/DeleteTransactionDialog.vue` — cảnh báo nêu rõ xóa vĩnh viễn (SC-005), hủy không đổi gì; RECORD_GONE → toast + làm tươi sổ; gắn vào LedgerView + TransactionFormView
 
 **Checkpoint**: Cả 5 user story hoạt động độc lập.

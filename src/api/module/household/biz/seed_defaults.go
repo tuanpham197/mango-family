@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"household-finance/api/common"
+	accountmodel "household-finance/api/module/account/model"
 	categorymodel "household-finance/api/module/category/model"
 
 	"github.com/google/uuid"
@@ -49,4 +50,32 @@ func SeedDefaultCategories(ctx context.Context, db *gorm.DB, householdID, create
 	add(defaultExpense, common.TypeExpense)
 	add(defaultIncome, common.TypeIncome)
 	return db.WithContext(ctx).Create(&cats).Error
+}
+
+// SeedDefaultAccount tạo tài khoản mặc định "Tiền mặt" (CASH) cho hộ nếu hộ CHƯA
+// có tài khoản nào (idempotent). Hộ mới luôn có ≥ 1 tài khoản (FR-006, D13).
+func SeedDefaultAccount(ctx context.Context, db *gorm.DB, householdID, createdBy uuid.UUID) error {
+	var count int64
+	if err := db.WithContext(ctx).Model(&accountmodel.Account{}).
+		Where("household_id = ?", householdID).Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+	return db.WithContext(ctx).Create(&accountmodel.Account{
+		HouseholdID: householdID,
+		Name:        "Tiền mặt",
+		Type:        common.AccountTypeCash,
+		CreatedBy:   &createdBy,
+	}).Error
+}
+
+// SeedDefaults — một chỗ duy nhất định nghĩa "hộ mới có gì": danh mục + tài khoản
+// mặc định (D9 + D13). Gọi khi tạo hộ (và trong cmd/seed cho hộ dev).
+func SeedDefaults(ctx context.Context, db *gorm.DB, householdID, createdBy uuid.UUID) error {
+	if err := SeedDefaultCategories(ctx, db, householdID, createdBy); err != nil {
+		return err
+	}
+	return SeedDefaultAccount(ctx, db, householdID, createdBy)
 }
