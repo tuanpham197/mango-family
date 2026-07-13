@@ -37,14 +37,16 @@ Stack decisions are authoritative in the re-platform design:
 > recoverable via git history). New stack: **Go API (Gin + GORM + WebSocket, migrations via goose)
 > + Vue 3 (Vite/TS/Pinia) + self-managed PostgreSQL**; responsive web, mobile-first. Go API layout
 > follows `github.com/tuanpham197/learn_go` (module-first `model/biz/storage/transport`); e2e =
-> Playwright. Source will live at `src/api` (Go) · `src/web` (Vue) · `src/db/migrations` (goose) —
-> not yet scaffolded.
+> Playwright. Source lives at `src/api` (Go) · `src/web` (Vue) · `src/db/migrations` (goose) —
+> scaffolded & 001 implemented. Dev workflow: `cd src && make dev && make seed`, then `make api` +
+> `make web`; tests `make test` (Go unit + Vitest) · `make test-api-integration` · `make test-e2e`.
 
 Feature status:
-- **001-transaction-categorization**: 🔁 re-implementation pending — design artifacts REWRITTEN for
-  Go+Vue (2026-07-10: plan/research/data-model/contracts/quickstart; contracts = `category-api.md` +
-  `db-schema.sql`). Includes the minimal identity foundation (users+auth+household scope) since 001
-  now goes FIRST. `tasks.md` regenerated 2026-07-10 (35 tasks) — READY for `/speckit-implement`.
+- **001-transaction-categorization**: ✅ **implemented (Go + Vue)** — 35/35 task xong & kiểm chứng
+  (Go unit + integration Postgres thật, Vitest 11/11, Playwright e2e 18/18 kịch bản #0–#17). Gồm nền
+  tảng định danh tối thiểu (users + JWT cookie + household scope), US1–US4 (bắt buộc phân loại cùng
+  loại, CRUD danh mục + concurrency `expected_updated_at`, danh mục con 1 cấp, gợi ý học lịch sử),
+  đồng bộ realtime qua WebSocket. Còn mở: bộ danh mục mặc định chờ nghiệp vụ; Quản lý hộ dùng dev seed.
 - **002-transaction-tracking**: spec v4 complete; design artifacts REWRITTEN for Go+Vue
   (2026-07-10: plan/research D13–D19/data-model/contracts = `transaction-api.md` + `db-schema.sql`
   delta/quickstart 23 kịch bản). Extends 001's foundation (accounts + balances view + transactions

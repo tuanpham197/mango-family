@@ -118,7 +118,7 @@ description: "Task list — Phân loại giao dịch (Go + Vue re-implementation
 - [X] T032 [P] Transport + middleware (httptest): 401 chưa đăng nhập, 404 ngoài hộ, mã lỗi contract — `src/api/middleware/*_test.go` + integration router-level `src/api/main_integration_test.go` (401/404/409 + mã lỗi contract)
 - [X] T033 [P] Web unit (Vitest): categories store getters (pickable/byType/findById), CategoryPicker filter+emit, api client error parsing — `src/web/src/**/__tests__/` (11 test pass)
 - [X] T034 Playwright e2e 18 kịch bản (#0–#17) trong `src/web/e2e/` — multi-context cho #13/#14/#16 (Alice/Bob/Carol); assert đồng bộ ≤ 5s (#13). **18/18 pass.**
-- [ ] T035 Chạy toàn bộ quickstart, cập nhật References/History các artifact theo `CLAUDE.md` (BR-001 → implemented nếu đủ; chạy `/speckit-analyze`)
+- [X] T035 Chạy toàn bộ quickstart (18/18 pass), cập nhật References/History: spec.md 001 (Status → Implemented, History v4), BR-001 (History v5 → implemented), CLAUDE.md (feature status 001 ✅). `/speckit-analyze` chạy sau khi chốt.
 
 ---
 

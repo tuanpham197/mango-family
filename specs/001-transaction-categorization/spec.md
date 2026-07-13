@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-24
 
-**Status**: Draft
+**Status**: Implemented (Go + Vue) — 2026-07-13
 
 **Input**: User description: "@specs/business-requirements/BR-001.md — Phân loại giao dịch: quản lý hệ thống danh mục Thu/Chi linh hoạt với danh mục con, đảm bảo mọi giao dịch đều được gán một danh mục phù hợp khi nhập."
 
@@ -191,3 +191,4 @@ Khi người dùng nhập giao dịch, hệ thống gợi ý một danh mục ph
 - v1 (2026-06-24): tạo spec từ BR-001 (Clarifications session 2026-06-24: gán cha/con, loại cố định, danh mục mặc định, cơ chế gợi ý).
 - v2 (2026-06-29): chuyển sang mô hình sổ chung hộ gia đình — chia sẻ danh mục & giao dịch trong hộ, mọi thành viên quyền ngang nhau (Clarifications session 2026-06-29).
 - v3 (2026-07-13): bổ sung khối References/Truy vết & History; liên kết UI wireframes [`specs/design/design.html`](../design/design.html) (màn 7 · Quản lý danh mục, trường danh mục ở màn 2 · Nhập giao dịch); phạm vi & FR không đổi.
+- v4 (2026-07-13, implement): **Status → Implemented (Go + Vue).** Toàn bộ 35 task ([`tasks.md`](tasks.md)) hoàn tất & kiểm chứng — nền tảng định danh (users/JWT cookie/household scope), US1–US4 (bắt buộc phân loại cùng loại, CRUD danh mục + concurrency, danh mục con 1 cấp, gợi ý học lịch sử), đồng bộ realtime qua WebSocket. Test xanh: Go unit + integration (Postgres thật), Vitest 11/11, Playwright e2e **18/18 kịch bản #0–#17**. Còn mở (không cản MVP): danh sách danh mục mặc định chờ nghiệp vụ chốt; feature Quản lý hộ (tạo/mời) vẫn dùng dev seed.
