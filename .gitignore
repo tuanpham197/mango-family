@@ -18,6 +18,15 @@ pubspec.lock
 .env.*
 *.keystore
 
+# Go build output
+/src/api/bin/
+
+# Cloud Run deploy secrets (chứa DATABASE_URL / JWT_SECRET thật)
+/src/deploy/env.yaml
+
+# Giữ lại các file mẫu (ghi đè quy tắc .env.* ở trên)
+!/src/web/.env.example
+
 # OS
 .DS_Store
 Thumbs.db
