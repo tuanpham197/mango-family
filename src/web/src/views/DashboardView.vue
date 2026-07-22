@@ -32,7 +32,7 @@ function greeting() {
 }
 async function logout() {
   await auth.logout()
-  router.push('/login')
+  router.replace('/login')
 }
 </script>
 

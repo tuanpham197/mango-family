@@ -45,12 +45,16 @@ export const useAuthStore = defineStore('auth', {
       await this.refresh()
     },
     async logout() {
+      // Bỏ qua lỗi gọi API (mạng/CORS): luôn xoá phiên cục bộ để chắc chắn về được
+      // /login. Nếu để lỗi ném ra, view sẽ không chạy tới router.push('/login').
       try {
         await api('/api/auth/logout', { method: 'POST' })
-      } finally {
-        this.user = null
-        this.household = null
+      } catch {
+        /* ignore */
       }
+      this.user = null
+      this.household = null
+      this.ready = false
     },
   },
 })
