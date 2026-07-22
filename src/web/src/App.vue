@@ -5,27 +5,9 @@ import { useHead } from '@vueuse/head'
 
 const auth = useAuthStore()
 const route = useRoute()
-useHead({
-  title: 'My Product',
-  meta: [
-    {
-      property: 'og:title',
-      content: 'My Product'
-    },
-    {
-      property: 'og:image',
-      content: `${window.location.origin}/assets/banner.png`
-    },
-    {
-      property: 'og:description',
-      content: 'Best product'
-    },
-    {
-      property: 'og:type',
-      content: 'website'
-    }
-  ]
-})
+// Chỉ đặt title động ở client. Thẻ og:* đã khai báo TĨNH trong index.html
+// (crawler không chạy JS nên og phải nằm sẵn trong HTML gốc).
+useHead({ title: 'Sổ Thu Chi' })
 </script>
 
 <template>
