@@ -29,6 +29,17 @@
 | [UC-TRK-04](./002-transaction-tracking/uc-trk-04-chinh-sua-giao-dich.md) | Chỉnh sửa giao dịch | US3 | FR-009, FR-011, FR-013, FR-014 | ✅ |
 | [UC-TRK-05](./002-transaction-tracking/uc-trk-05-xoa-giao-dich.md) | Xóa giao dịch (có xác nhận) | US4 | FR-010, FR-011, FR-013, FR-014 | ✅ |
 
+## Feature 003 — Thiết Lập Ngân Sách ([spec](../003-budgeting/spec.md) · [BR-003](../business-requirements/BR-003.md) — 🚧 spec, chờ plan)
+
+| Mã | Use Case | User Story | Truy vết FR (003) | Sơ đồ |
+|----|----------|------------|-------------------|:-----:|
+| [UC-BGT-01](./003-budgeting/uc-bgt-01-tao-ngan-sach-danh-muc.md) | Tạo ngân sách theo danh mục | US1 | FR-001, FR-003, FR-004, FR-010, FR-011 | ✅ |
+| [UC-BGT-02](./003-budgeting/uc-bgt-02-tao-ngan-sach-tong.md) | Tạo ngân sách tổng chi tiêu | US4 | FR-002, FR-003, FR-004, FR-010, FR-011 | ✅ |
+| [UC-BGT-03](./003-budgeting/uc-bgt-03-theo-doi-tien-do.md) | Theo dõi tiến độ ngân sách | US2 | FR-005, FR-006 | ✅ |
+| [UC-BGT-04](./003-budgeting/uc-bgt-04-canh-bao-ngan-sach.md) | Nhận cảnh báo ngưỡng & vượt ngân sách | US3 | FR-007, FR-008, FR-009 | ✅ |
+| [UC-BGT-05](./003-budgeting/uc-bgt-05-chinh-sua-ngan-sach.md) | Chỉnh sửa ngân sách | US5 | FR-012, FR-013 | ✅ |
+| [UC-BGT-06](./003-budgeting/uc-bgt-06-xoa-ngan-sach.md) | Xóa ngân sách (có xác nhận) | US5 | FR-012, FR-013 | ✅ |
+
 ## Sơ đồ quan hệ (rút gọn)
 
 ![Sơ đồ use case](../diagrams/use-cases.png)
@@ -53,6 +64,14 @@ Thành viên hộ gia đình  (quyền ngang nhau — dữ liệu dùng chung tr
    │     ├── UC-TRK-04  Chỉnh sửa giao dịch   «extend» UC-TRK-03 · «include» UC-CAT-07 khi đổi loại
    │     └── UC-TRK-05  Xóa giao dịch         «extend» UC-TRK-03
    │
+   ├── Thiết lập ngân sách (003)
+   │     ├── UC-BGT-01  Tạo ngân sách theo danh mục
+   │     ├── UC-BGT-02  Tạo ngân sách tổng chi tiêu
+   │     ├── UC-BGT-03  Theo dõi tiến độ ngân sách   ┄ phụ thuộc dữ liệu UC-TRK-02 (đọc giao dịch Chi; tiến độ suy ra)
+   │     ├── UC-BGT-04  Nhận cảnh báo ngưỡng & vượt  «extend» UC-BGT-03
+   │     ├── UC-BGT-05  Chỉnh sửa ngân sách          «extend» UC-BGT-03
+   │     └── UC-BGT-06  Xóa ngân sách (có xác nhận)  «extend» UC-BGT-03
+   │
    └── Tiền đề: Quản lý hộ (feature riêng — BR đề xuất)
          ├── UC-HH-01  Tạo hộ gia đình
          ├── UC-HH-02  Mời thành viên
@@ -68,3 +87,8 @@ Thành viên hộ gia đình  (quyền ngang nhau — dữ liệu dùng chung tr
 - **Quản lý hộ** (tạo hộ, mời/tham gia) là tiền đề thuộc feature riêng (UC-HH-*).
 - Mọi thành viên **quyền ngang nhau**; bản ghi ghi rõ **người tạo** — hiển thị **tên**
   (không phải mã định danh) trong sổ chung.
+- Feature 003 (**ngân sách**) chỉ **đọc** giao dịch (002) và danh mục (001) để tính
+  tiến độ suy ra; không sửa dữ liệu nguồn. Tiến độ & cảnh báo (80% / vượt 100%) đồng bộ
+  realtime cho mọi thành viên; mỗi mức cảnh báo phát tối đa 1 lần/kỳ (phát lại nếu tụt
+  dưới mức rồi vượt lại). Sửa/xóa ngân sách (UC-BGT-05/06) là vòng đời suy luận — chờ
+  nghiệp vụ xác nhận (Assumptions spec 003).

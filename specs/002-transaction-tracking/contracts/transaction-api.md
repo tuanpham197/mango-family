@@ -19,7 +19,7 @@
 | Method & Path | Body / Query | Response | Truy vết |
 |---|---|---|---|
 | `POST /api/transactions` | `{amount, type, category_id, account_id, description?, transaction_date?}` — `transaction_date` mặc định now; `created_by` server gán từ phiên | `201 {data:Transaction}` | FR-001…007, FR-013 |
-| `GET /api/transactions` | `?page=&page_size=` (mặc định 50) | `{data:[Transaction], paging:{page, page_size, total}}` — mới nhất trước, embed đủ tên hiển thị | FR-008, D16 |
+| `GET /api/transactions` | `?page=&page_size=` (mặc định 50) `&from=&to=` (YYYY-MM-DD, inclusive — filter tháng/năm, tùy chọn) | `{data:[Transaction], paging:{page, page_size, total}}` — mới nhất trước, embed đủ tên hiển thị; from/to lọc `transaction_date`, `to<from`/sai định dạng → 400; phân trang áp trong khoảng đã lọc (infinite scroll theo khoảng) | FR-008, D16 |
 | `GET /api/transactions/:id` | — | `{data:Transaction}` (prefill form sửa) | FR-009 |
 | `PATCH /api/transactions/:id` | `{amount?, type?, category_id?, account_id?, description?, transaction_date?, expected_updated_at}` — validate như tạo mới | `{data:Transaction}` | FR-009, FR-014, D17/D18 |
 | `DELETE /api/transactions/:id` | `{expected_updated_at?}` — UI luôn hiện dialog xác nhận trước khi gọi (SC-005) | `204` | FR-010, FR-014 |
@@ -52,3 +52,4 @@
 ## History
 
 - 2026-07-10: Tạo mới thay `transaction-repository.md` (re-platform Go + Vue); ánh xạ toàn bộ hợp đồng domain cũ (TransactionRepository/AccountRepository/CurrentUser) sang REST + WS; CurrentUser → `GET /api/me` (001).
+- 2026-07-16: Bổ sung filter `?from=&to=` cho `GET /api/transactions` (lọc tháng/năm) + màn Giao dịch thêm bộ chọn tháng/năm; infinite scroll (đã có) nay áp theo khoảng đã lọc. Chỉ ĐỌC, không đổi schema. Kèm test storage/httptest/Vitest/e2e (#24).

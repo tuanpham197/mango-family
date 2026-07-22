@@ -29,8 +29,11 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 
 <!-- SPECKIT START -->
 For technologies, project structure, and other important context, read the current plan:
-`specs/001-transaction-categorization/plan.md` (re-plan Go+Vue, 2026-07-10)
-Stack decisions are authoritative in the re-platform design:
+`specs/005-reports/plan.md` (Go+Vue, 2026-07-15) — read-only Reports (overview: income/expense/net +
+category-distribution + trend charts; per-category detail) over a selectable date range, on the
+implemented 001–004 foundation; **adds the first new FE dependency `chart.js`** (thin in-house Vue
+wrapper). Base stack/structure context in `specs/001-transaction-categorization/plan.md`. Stack
+decisions are authoritative in the re-platform design:
 `docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md`
 
 > ⚠️ **Re-platform (2026-07-09/10)**: Flutter + Supabase have been REMOVED (code in `src/` deleted;
@@ -54,7 +57,39 @@ Feature status:
   phân trang + realtime, tài khoản mặc định "Tiền mặt" seed theo hộ. Migrations goose 00006 (accounts)
   · 00007 (transactions.account_id + updated_at + view `account_balances`). Còn mở: quản lý tài khoản
   đầy đủ (CRUD/chuyển tiền) thuộc BR-005.
-- **003-budgeting**: spec v1 complete (tech-agnostic), awaiting plan.
+- **003-budgeting**: ✅ **implemented (Go + Vue)** — 34/34 task xong & kiểm chứng (Go unit biz+model,
+  integration storage+evaluator trên Postgres thật, Vitest 40/40, Playwright e2e 22 spec/003 = toàn bộ
+  34 kịch bản quickstart). Module `budget` (model/storage/biz/transport/**eval**) trên nền 001/002 (chỉ
+  ĐỌC giao dịch/danh mục); migrations goose `00008_budgets` · `00009_budget_alerts`. Tiến độ = giá trị
+  **suy ra** ở biz (cửa sổ kỳ từ `now()`+`period_type`; danh mục con 1 cấp; chỉ EXPENSE — không view,
+  không cột spent); cảnh báo 80%/vượt 100% qua máy trạng thái `budget_alerts` (chống trùng + phát lại),
+  đánh giá bởi **subscriber pubsub `module/budget/eval`** trên `transactions_changed` + recompute inline
+  khi CRUD ngân sách → publish `budgets_changed` (realtime ≤ 5s). Sửa/xóa ngang quyền, mốc lạc quan
+  `updated_at` (PATCH merge trường vắng). **FR-014**: widget tóm tắt ngân sách + "Xem tất cả" trên màn
+  Tổng quan (feature 004 chuyển màn này lên `/`). Còn mở: ngưỡng cấu hình + push/email (mở rộng sau);
+  sửa/xóa là vòng đời suy luận chờ nghiệp vụ xác nhận.
+- **004-monthly-income-expense-overview**: ✅ **implemented (Go + Vue)** — 24/24 task xong & kiểm chứng
+  (Go unit biz + integration storage + httptest, Vitest 52/52, Playwright e2e 12 spec/004 + toàn bộ
+  001/002/003 xanh sau khi lan truyền route). Màn **Tổng quan đầy đủ** khớp `specs/design/dashboard.png`:
+  lời chào → **Tổng tài sản ròng** (+% so tháng trước) → **Thu/Chi tháng** → **Chi tiêu theo danh mục**
+  (MỚI, trước ngân sách, gộp con) → **Ngân sách** (widget 003) → **Giao dịch gần đây**. Module **read-only**
+  `overview` phơi một endpoint tổng hợp `GET /api/overview` (giá trị suy ra; **không bảng/migration**);
+  ngân sách vẫn dùng `GET /api/budgets`. **Đổi trang mặc định (D31)**: `/` = Tổng quan (trang chủ), sổ giao
+  dịch → **`/ledger`**, `/overview`→`/` redirect; nav 5 mục **Tổng quan · Giao dịch · ＋ · Ngân sách · Báo cáo**
+  (Báo cáo = placeholder BR-004; **Danh mục** thành lối phụ trên header Tổng quan). Realtime: store `overview`
+  refetch theo transactions/accounts/budgets/categories_changed. Còn mở: Báo cáo (BR-004); có bỏ hẳn Danh mục
+  khỏi nav không (chờ nghiệp vụ). Xem [[budget-dashboard-route]].
+- **005-reports**: ✅ **implemented (Go + Vue)** — 23/23 task xong & kiểm chứng (Go unit biz+model +
+  integration storage + httptest, Vitest 63/63, Playwright e2e 5 spec/005 + toàn bộ 001–004 xanh). Màn
+  **Báo cáo** (`/reports`, thay placeholder của 004): báo cáo tổng quan theo khoảng chọn được (tuần/tháng/
+  quý/năm/tùy chỉnh) — tổng Thu/Chi/ròng + **phân bổ chi theo danh mục** (donut) + **xu hướng thu/chi**
+  (line); **báo cáo chi tiết theo danh mục** (drill-in: tổng + danh sách giao dịch + xu hướng danh mục).
+  Module **read-only** `report` với 2 endpoint `GET /api/reports/overview` + `/api/reports/category/:id`
+  (tổng hợp bằng SQL `SUM`/`date_trunc`; gộp danh mục con; **không bảng/migration**); FE quy preset →
+  from/to, server chọn đơn vị gom nhóm (day/week/month) + điền mốc trống. **Dependency FE mới đầu tiên:
+  `chart.js`** (bọc wrapper Vue mỏng `components/charts/`). Còn mở: xuất PDF/Excel, forecasting, benchmark
+  (Out of Scope BR); **số hiệu BR lệch**: file `specs/business-requirements/BR-006.md` mang ID nội bộ
+  "BR-004" (không có BR-004.md) — cần nghiệp vụ thống nhất.
 
 Model (unchanged): **shared family household** — multiple members, EQUAL permissions; data shared
 per `household_id`, isolated across households. **Users are an INDEPENDENT directory** — the single

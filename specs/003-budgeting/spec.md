@@ -44,6 +44,7 @@ Thành viên xem danh sách ngân sách của hộ, mỗi ngân sách hiển th�
 4. **Given** một giao dịch được đổi từ danh mục A (có ngân sách) sang danh mục B (có ngân sách khác), **When** lưu, **Then** tiến độ của cả hai ngân sách đều cập nhật đúng.
 5. **Given** Alice đang mở màn hình ngân sách, **When** Bob nhập một giao dịch ảnh hưởng ngân sách, **Then** tiến độ trên màn hình của Alice cập nhật trong vòng 5 giây.
 6. **Given** giao dịch Chi thuộc danh mục con của danh mục có ngân sách, **When** lưu, **Then** giao dịch được tính vào tiến độ ngân sách của danh mục cha.
+7. **Given** hộ đang có ngân sách hoạt động, **When** thành viên mở màn hình Tổng quan, **Then** thấy tóm tắt ngân sách kỳ hiện tại (tổng nếu có + vài danh mục nổi bật) với đúng mã màu ngưỡng; bấm "Xem tất cả" mở danh sách ngân sách đầy đủ.
 
 ---
 
@@ -128,6 +129,7 @@ Bất kỳ thành viên nào cũng có thể sửa (giới hạn, kỳ, danh m�
 - **FR-011**: Ngân sách MUST thuộc về một hộ gia đình, dùng chung giữa các thành viên trong hộ và cô lập giữa các hộ khác nhau; mỗi ngân sách MUST ghi nhận thành viên đã tạo. *(kế thừa mô hình BR-001/BR-002)*
 - **FR-012**: Thành viên MUST sửa được (giới hạn, kỳ, danh mục) và xóa được ngân sách của hộ với quyền ngang nhau, kể cả ngân sách do thành viên khác tạo; sửa MUST qua cùng quy tắc xác thực như khi tạo; xóa MUST luôn có bước xác nhận; trạng thái cảnh báo MUST được tính lại theo thay đổi. *(suy luận vòng đời tối thiểu — xem Assumptions)*
 - **FR-013**: Khi nhiều thành viên sửa/xóa cùng một ngân sách gần như đồng thời, hệ thống MUST không ghi đè thầm lặng — người lưu sau MUST được thông báo bản ghi đã thay đổi hoặc đã bị xóa. *(nhất quán feature 002)*
+- **FR-014**: Màn hình Tổng quan (Dashboard) MUST hiển thị một **tóm tắt ngân sách** của kỳ hiện tại: tiến độ ngân sách **tổng** của kỳ (đã chi/giới hạn + phần trăm) nếu có, và tiến độ của một vài ngân sách danh mục nổi bật — dùng **cùng mã màu ngưỡng** như màn Ngân sách (bình thường / amber khi ≥ 80% / đỏ khi vượt). Tóm tắt MUST có lối "Xem tất cả" dẫn tới danh sách ngân sách đầy đủ (US2), và cập nhật realtime như danh sách. *(BR-BGT-005/006/007; wireframe màn 1 · Tổng quan — phần khác của Dashboard thuộc feature khác, xem Assumptions)*
 
 ### Key Entities *(include if feature involves data)*
 
@@ -159,6 +161,7 @@ Bất kỳ thành viên nào cũng có thể sửa (giới hạn, kỳ, danh m�
 - **Sửa/xóa ngân sách là suy luận** *(BR-003 In Scope không liệt kê)*: Spec bổ sung vòng đời tối thiểu (FR-012) để ngân sách không bị đóng băng sau khi tạo; cần nghiệp vụ xác nhận khi review BR.
 - **Một loại tiền tệ**: Theo Out of Scope BR-003; không xử lý đa tiền tệ.
 - **Phụ thuộc dữ liệu**: Tiến độ ngân sách phụ thuộc giao dịch (BR-002/feature 002) và danh mục (BR-001/feature 001); ngân sách chỉ đọc, không sửa dữ liệu nguồn. Feature 002 cần được triển khai trước hoặc song song để ngân sách có dữ liệu thật.
+- **Phạm vi Dashboard trong feature 003** *(FR-014)*: Chỉ **phần tóm tắt ngân sách** trên màn Tổng quan thuộc feature này. Các thành phần khác của Dashboard theo wireframe màn 1 — tài sản ròng, thu/chi tháng, giao dịch gần đây — thuộc feature khác (BR-002/BR-004/BR-005) và nằm ngoài phạm vi 003; nếu chưa có màn Tổng quan, feature 003 dựng khung tối thiểu chỉ để chứa tóm tắt ngân sách.
 - **Owner & Target Quarter**: TBD trong BR-003; không ảnh hưởng phạm vi chức năng.
 
 ## References / Truy vết
@@ -167,13 +170,18 @@ Bất kỳ thành viên nào cũng có thể sửa (giới hạn, kỳ, danh m�
 
 - **Nguồn (BR)**: [`BR-003`](../business-requirements/BR-003.md) — Thiết lập ngân sách.
 - **Tiền đề**: [`BR-001`](../business-requirements/BR-001.md) / feature [`001-transaction-categorization`](../001-transaction-categorization/spec.md) (danh mục, mô hình hộ) · [`BR-002`](../business-requirements/BR-002.md) / feature [`002-transaction-tracking`](../002-transaction-tracking/spec.md) (giao dịch, số dư).
-- **Use cases**: chưa tạo — dự kiến `UC-BGT-01` (tạo ngân sách), `UC-BGT-02` (theo dõi & cảnh báo) tại `specs/use-cases/003-budgeting/` (bước sau).
-- **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md) — cần bổ sung BUDGET/BUDGET_ALERT khi cập nhật (bước sau).
-- **UI design (wireframes)**: [`specs/design/design.html`](../design/design.html) — màn **4 · Ngân sách** (tổng tháng + tiến độ theo danh mục; cảnh báo ⚠ amber ≥80%, đỏ khi vượt mức — BR-BGT-006/007); widget ngân sách ở màn **1 · Tổng quan**; chỉ mục màn hình → spec tại [`specs/design/README.md`](../design/README.md).
-- **Dẫn xuất (design)**: `plan.md` · `research.md` · `data-model.md` · `contracts/` · `quickstart.md` · `tasks.md` (chưa tạo — `/speckit-plan`).
+- **Use cases**: [`specs/use-cases/003-budgeting/`](../use-cases/003-budgeting/) — 6 UC: [`UC-BGT-01`](../use-cases/003-budgeting/uc-bgt-01-tao-ngan-sach-danh-muc.md) tạo ngân sách theo danh mục (US1) · [`UC-BGT-02`](../use-cases/003-budgeting/uc-bgt-02-tao-ngan-sach-tong.md) tạo ngân sách tổng (US4) · [`UC-BGT-03`](../use-cases/003-budgeting/uc-bgt-03-theo-doi-tien-do.md) theo dõi tiến độ (US2) · [`UC-BGT-04`](../use-cases/003-budgeting/uc-bgt-04-canh-bao-ngan-sach.md) cảnh báo ngưỡng & vượt (US3) · [`UC-BGT-05`](../use-cases/003-budgeting/uc-bgt-05-chinh-sua-ngan-sach.md) chỉnh sửa · [`UC-BGT-06`](../use-cases/003-budgeting/uc-bgt-06-xoa-ngan-sach.md) xóa (US5). Chỉ mục: [`use-cases/README.md`](../use-cases/README.md); sơ đồ: [`use-cases.puml`](../diagrams/use-cases.puml).
+- **Entity model**: [`specs/entities/entity-model.md`](../entities/entity-model.md) — đã bổ sung **BUDGET** + **BUDGET_ALERT** (2026-07-13).
+- **UI design (wireframes)**: [`specs/design/design.html`](../design/design.html) — màn **4 · Ngân sách** (tổng tháng + tiến độ theo danh mục; cảnh báo ⚠ amber ≥80%, đỏ khi vượt mức — BR-BGT-006/007); **widget tóm tắt ngân sách + lối "Xem tất cả" ở màn 1 · Tổng quan (FR-014)**; chỉ mục màn hình → spec tại [`specs/design/README.md`](../design/README.md).
+- **Dẫn xuất (design)**: [`plan.md`](plan.md) · [`research.md`](research.md) (D20–D26) · [`data-model.md`](data-model.md) · [`contracts/`](contracts/) (`budget-api.md` + `db-schema.sql`) · [`quickstart.md`](quickstart.md) (34 kịch bản) · [`tasks.md`](tasks.md) (34 task) — tạo 2026-07-13 (`/speckit-plan` + `/speckit-tasks`, Go+Vue).
 - **Checklist chất lượng**: [`checklists/requirements.md`](checklists/requirements.md).
 
 ## History
 
 - v1 (2026-07-10): tạo spec từ BR-003 (mô hình sổ chung hộ gia đình kế thừa BR-001/BR-002); 4 Open Question của BR-003 (ngưỡng cấu hình, kênh cảnh báo, tự lặp kỳ, danh mục nhiều ngân sách) chốt bằng mặc định an toàn trong Assumptions — chờ nghiệp vụ xác nhận; bổ sung FR-012 sửa/xóa ngân sách (suy luận vòng đời tối thiểu).
 - v2 (2026-07-13): thêm tham chiếu UI wireframes [`specs/design/design.html`](../design/design.html) (màn 4 · Ngân sách, widget ngân sách ở màn 1 · Tổng quan) vào References; phạm vi & FR không đổi.
+- v3 (2026-07-13): tạo 6 use case tại [`specs/use-cases/003-budgeting/`](../use-cases/003-budgeting/) (UC-BGT-01…06 ánh xạ US1–US5); cập nhật sơ đồ [`use-cases.puml`](../diagrams/use-cases.puml) (+render `use-cases.png`) và chỉ mục [`use-cases/README.md`](../use-cases/README.md); cập nhật liên kết Use cases trong References. Phạm vi & FR không đổi.
+- v4 (2026-07-13): `/speckit-plan` (Go+Vue) — tạo design artifacts (plan/research D20–D26/data-model/contracts `budget-api.md`+`db-schema.sql`/quickstart 33 kịch bản); bổ sung **BUDGET**+**BUDGET_ALERT** vào entity model; module `budget` + migrations goose `00008`/`00009`, cảnh báo qua subscriber pubsub, tiến độ suy ra ở biz. Phạm vi & FR không đổi.
+- v5 (2026-07-13): thêm **FR-014** (tóm tắt ngân sách trên màn Tổng quan/Dashboard + "Xem tất cả") theo wireframe màn 1; thêm US2 #7 (Acceptance) và Assumptions phạm vi Dashboard (chỉ phần ngân sách thuộc 003); tương ứng thêm task màn Tổng quan vào `tasks.md` + kịch bản quickstart #34. Cảnh báo/tiến độ cơ chế không đổi.
+- v6 (2026-07-14): `/speckit-implement` — feature **triển khai (Go+Vue)**, 34/34 task xong & kiểm chứng (Go unit+integration, Vitest 40/40, Playwright e2e 34 kịch bản). Ghi chú triển khai: màn Tổng quan (FR-014) đặt ở **`/overview`** thay vì `/` (T017) để giữ ledger 002 ở `/` — 001/002 e2e không đổi; PATCH ngân sách merge trường vắng (loại bất biến). Phạm vi & FR không đổi.
+- v7 (2026-07-15): **feature 004** dựng màn Tổng quan đầy đủ và chuyển nó lên `/` (sổ giao dịch → `/ledger`); widget tóm tắt ngân sách (FR-014) của 003 được giữ nguyên, chỉ dời vị trí (sau mục "Chi tiêu theo danh mục"). Không đổi phạm vi/cơ chế ngân sách 003.

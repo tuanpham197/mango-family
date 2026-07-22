@@ -1,8 +1,9 @@
-@startuml Use Cases — Sổ tài chính hộ gia đình (feature 001 + 002)
-' Nguồn: specs/use-cases/<feature>/*.md · specs/001-*/spec.md · specs/002-*/spec.md
+@startuml Use Cases — Sổ tài chính hộ gia đình (feature 001 + 002 + 003)
+' Nguồn: specs/use-cases/<feature>/*.md · specs/001-*/spec.md · specs/002-*/spec.md · specs/003-*/spec.md
 ' 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
 ' 2026-07-06: thêm feature 002 (UC-TRK-01..05); người dùng là danh sách độc lập (FR-015/002).
 ' 2026-07-10: re-platform Go+Vue — bỏ chú thích RLS (cơ chế stack cũ); 001 → re-implementation pending.
+' 2026-07-13: thêm feature 003 (UC-BGT-01..06) — ngân sách theo danh mục/tổng, tiến độ & cảnh báo.
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -35,6 +36,15 @@ rectangle "Feature 001 — Phân loại giao dịch (re-implementation pending)"
     }
 }
 
+rectangle "Feature 003 — Thiết lập ngân sách" {
+    usecase "UC-BGT-01\nTạo ngân sách theo danh mục" as BGT01
+    usecase "UC-BGT-02\nTạo ngân sách tổng chi tiêu" as BGT02
+    usecase "UC-BGT-03\nTheo dõi tiến độ ngân sách" as BGT03
+    usecase "UC-BGT-04\nNhận cảnh báo ngưỡng & vượt" as BGT04
+    usecase "UC-BGT-05\nChỉnh sửa ngân sách" as BGT05
+    usecase "UC-BGT-06\nXóa ngân sách (có xác nhận)" as BGT06
+}
+
 rectangle "Tiền đề: Quản lý hộ gia đình (feature riêng — BR đề xuất)" #EEEEEE {
     usecase "UC-HH-01\nTạo hộ gia đình" as HH01
     usecase "UC-HH-02\nMời thành viên" as HH02
@@ -54,6 +64,12 @@ member --> UC05
 member --> UC06
 member --> UC07
 member --> UC08
+member --> BGT01
+member --> BGT02
+member --> BGT03
+member --> BGT04
+member --> BGT05
+member --> BGT06
 member --> HH01
 member --> HH02
 member --> HH03
@@ -66,6 +82,14 @@ TRK02 ..> UC07 : «include»
 TRK04 ..> TRK03 : «extend»
 TRK05 ..> TRK03 : «extend»
 TRK04 ..> UC07 : «include»\n(khi đổi loại)
+
+' Feature 003 — ngân sách
+BGT04 ..> BGT03 : «extend»\n(cảnh báo khi tiến độ đổi)
+BGT05 ..> BGT03 : «extend»
+BGT06 ..> BGT03 : «extend»
+' Phụ thuộc dữ liệu (không phải «include»/«extend»): tiến độ ngân sách SUY RA
+' từ giao dịch Chi (tạo/sửa/xóa qua TRK-02/04/05); ngân sách chỉ ĐỌC, không đổi.
+BGT03 ..> TRK02 : đọc giao dịch Chi\n(tiến độ suy ra)
 
 note bottom of TRK01
   Nguồn định danh duy nhất (danh sách người dùng
@@ -89,6 +113,18 @@ end note
 note bottom of UC07
   Chỉ hiển thị danh mục cùng loại Thu/Chi;
   chặn lưu nếu chưa chọn (FR-013, FR-014 /001).
+end note
+
+note bottom of BGT04
+  Ngưỡng cố định 80% + vượt 100%; in-app cho MỌI
+  thành viên; mỗi mức phát tối đa 1 lần/kỳ, phát lại
+  nếu tụt dưới mức rồi vượt lại (FR-007..009 /003).
+end note
+
+note bottom of BGT03
+  Tiến độ = tổng giao dịch Chi trong kỳ (danh mục +
+  danh mục con, hoặc toàn bộ chi với ngân sách tổng);
+  giá trị SUY RA, tính lại khi giao dịch đổi (FR-005/006).
 end note
 
 note as N1
