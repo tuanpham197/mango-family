@@ -1,9 +1,31 @@
 <script setup lang="ts">
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
+import { useHead } from '@vueuse/head'
 
 const auth = useAuthStore()
 const route = useRoute()
+useHead({
+  title: 'My Product',
+  meta: [
+    {
+      property: 'og:title',
+      content: 'My Product'
+    },
+    {
+      property: 'og:image',
+      content: `${window.location.origin}/assets/banner.png`
+    },
+    {
+      property: 'og:description',
+      content: 'Best product'
+    },
+    {
+      property: 'og:type',
+      content: 'website'
+    }
+  ]
+})
 </script>
 
 <template>
