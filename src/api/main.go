@@ -8,7 +8,9 @@ import (
 	"household-finance/api/component/pubsub"
 	"household-finance/api/component/subscriber"
 	"household-finance/api/component/wshub"
+	"household-finance/api/config"
 	"household-finance/api/middleware"
+	budgeteval "household-finance/api/module/budget/eval"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -31,24 +33,39 @@ func main() {
 	secret := env("JWT_SECRET", "dev-secret-change-me")
 	port := env("PORT", "8080")
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	pool := config.DBPoolConfig()
+	dialector := postgres.Open(dsn)
+	if pool.PreferSimpleProtocol {
+		// Supabase transaction pooler (cổng 6543) không hỗ trợ prepared statement.
+		dialector = postgres.New(postgres.Config{DSN: dsn, PreferSimpleProtocol: true})
+	}
+	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
 		log.Fatalf("không kết nối được Postgres: %v", err)
 	}
+	// Giới hạn pool — Supabase pooler có số kết nối hữu hạn; Cloud Run stateless.
+	if sqlDB, err := db.DB(); err == nil {
+		sqlDB.SetMaxOpenConns(pool.MaxOpen)
+		sqlDB.SetMaxIdleConns(pool.MaxIdle)
+		sqlDB.SetConnMaxLifetime(pool.MaxLifetime)
+		sqlDB.SetConnMaxIdleTime(pool.MaxIdleTime)
+	}
 
 	ps := pubsub.NewLocal()
 	hub := wshub.NewHub()
-	subscriber.Start(ps, hub)
+	subscriber.Start(ps, hub) // pubsub → WebSocket hub
 
 	ac := appctx.New(db, secret, ps, hub)
+	budgeteval.Start(ac) // đánh giá cảnh báo ngân sách theo transactions_changed (D24)
 
 	r := gin.New()
-	r.Use(gin.Logger(), middleware.Recover())
+	r.Use(gin.Logger(), middleware.Recover(), middleware.CORS(config.CORSOrigins()))
 
 	registerRoutes(r, ac)
-	serveSPA(r) // prod: Go serve web/dist (một origin — design §3)
+	registerDocs(r) // OpenAPI spec + Swagger UI tại /docs (tắt bằng DOCS_ENABLED=false)
+	serveSPA(r)     // prod: Go serve web/dist (một origin — design §3)
 
 	log.Printf("API chạy tại :%s", port)
 	if err := r.Run(":" + port); err != nil {

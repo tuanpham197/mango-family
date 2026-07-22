@@ -1,0 +1,8 @@
+# Chỉ cần source Go để build; loại bớt để build nhanh & image gọn.
+bin/
+*_test.go
+.env
+.env.*
+*.md
+idea.md
+.DS_Store

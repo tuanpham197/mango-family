@@ -57,7 +57,7 @@ test('#14 sửa 50.000 → 80.000, số dư điều chỉnh đúng 30.000', asyn
   await expect(page.getByRole('heading', { name: 'Sửa giao dịch' })).toBeVisible()
   await page.getByTestId('amount-input').fill('80000')
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
   const after = await readBalance(page, 'Tiền mặt')
   expect(before - after).toBe(30000) // chi tăng thêm 30.000 → số dư giảm thêm 30.000
 })
@@ -73,7 +73,7 @@ test('#15 sửa đổi Chi → Thu làm danh mục cũ mất hiệu lực, phả
   await expect(page.getByTestId('error-category')).toBeVisible()
   await page.getByTestId('category-option-Lương').click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 })
 
 // #19/#20/#21 — Xóa có xác nhận; hủy; số dư hoàn tác (UC-TRK-05)
@@ -105,18 +105,59 @@ test('#22 số dư từ GET /api/accounts khớp tổng bút toán sau chuỗi t
 
   const accRes = await page.request.get('/api/accounts')
   const acc = (await accRes.json()).data.find((a: { name: string }) => a.name === 'Tiền mặt')
-  const txRes = await page.request.get('/api/transactions?page_size=1000')
-  const txns = (await txRes.json()).data as Array<{ amount: number; type: string; account_id: string }>
+  // Duyệt HẾT trang (API chặn page_size ở 100) để tổng đúng kể cả khi hộ có > 100 giao dịch.
+  const txns: Array<{ amount: number; type: string; account_id: string }> = []
+  for (let p = 1; ; p++) {
+    const res = await page.request.get(`/api/transactions?page=${p}&page_size=100`)
+    const body = await res.json()
+    txns.push(...body.data)
+    if (txns.length >= body.paging.total || body.data.length === 0) break
+  }
   const expected = txns
     .filter((t) => t.account_id === acc.id)
     .reduce((s, t) => s + (t.type === 'INCOME' ? t.amount : -t.amount), 0)
   expect(acc.balance).toBe(expected) // view = tổng bút toán có dấu
 })
 
+// #24 — Filter tháng/năm ở màn Giao dịch (feature bổ sung 2026-07)
+test('#24 filter tháng/năm: đổi năm ẩn giao dịch ngoài khoảng, đổi lại hiện lại', async ({ page }) => {
+  const d = uniqueName('filter')
+  await createTransaction(page, { amount: 77000, category: 'Ăn uống', description: d }) // tháng hiện tại → /ledger
+  await expect(page.getByTestId('txn-filter')).toBeVisible()
+  await expect(page.getByTestId('transaction-row').filter({ hasText: d })).toBeVisible()
+
+  // Đổi sang năm trước → giao dịch (năm nay) không nằm trong khoảng
+  const now = new Date()
+  await page.getByTestId('filter-year').selectOption(String(now.getFullYear() - 1))
+  await expect(page.getByTestId('transaction-row').filter({ hasText: d })).toHaveCount(0)
+
+  // Đổi về năm nay → hiển thị lại
+  await page.getByTestId('filter-year').selectOption(String(now.getFullYear()))
+  await expect(page.getByTestId('transaction-row').filter({ hasText: d })).toBeVisible()
+})
+
+// #25 — Ô số tiền tự format có dấu ngăn cách hàng nghìn khi gõ
+test('#25 ô số tiền tự format khi gõ (3500000 → 3.500.000)', async ({ page }) => {
+  await page.goto('/transactions/new')
+  const input = page.getByTestId('amount-input')
+  await input.fill('3500000')
+  await expect(input).toHaveValue('3.500.000')
+  await input.fill('50000')
+  await expect(input).toHaveValue('50.000')
+})
+
+// #26 — Màn tạo giao dịch mặc định ngày = hôm nay
+test('#26 màn tạo mặc định điền sẵn ngày hôm nay', async ({ page }) => {
+  await page.goto('/transactions/new')
+  await expect(page.getByTestId('date-input')).toHaveValue(new Date().toISOString().slice(0, 10))
+})
+
+// Đọc số dư theo SỰ THẬT của server (GET /api/accounts) — tất định, không lệ thuộc thời
+// điểm refetch bất đồng bộ của AccountBalanceChip qua WebSocket (tránh flaky). Vẫn kiểm
+// đúng "số dư điều chỉnh đúng" sau tạo/sửa/xóa; view số dư = tổng bút toán có dấu (D14).
 async function readBalance(page: import('@playwright/test').Page, name: string): Promise<number> {
-  const text = (await page.getByTestId(`balance-${name}`).textContent()) ?? '0'
-  // "−50.000 ₫" → -50000
-  const negative = text.includes('−') || text.includes('-')
-  const digits = Number(text.replace(/[^\d]/g, ''))
-  return negative ? -digits : digits
+  const res = await page.request.get('/api/accounts')
+  const accounts = (await res.json()).data as Array<{ name: string; balance: number }>
+  const acc = accounts.find((a) => a.name === name)
+  return acc ? acc.balance : 0
 }

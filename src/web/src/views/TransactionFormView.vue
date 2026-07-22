@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ApiError } from '../api/client'
 import type { CategoryType, Transaction } from '../api/types'
 import CategoryPicker from '../components/CategoryPicker.vue'
+import MoneyInput from '../components/MoneyInput.vue'
 import SuggestionChip from '../components/SuggestionChip.vue'
 import { useAccountsStore } from '../stores/accounts'
 import { useCategoriesStore } from '../stores/categories'
@@ -21,7 +22,7 @@ const editId = computed(() => (route.params.id as string | undefined) ?? null)
 const isEdit = computed(() => editId.value !== null)
 
 const type = ref<CategoryType>('EXPENSE')
-const amount = ref<number | null>(null)
+const amount = ref<number | null>(null) // giá trị số (MoneyInput tự format hiển thị)
 const description = ref('')
 const categoryId = ref<string | null>(null)
 const accountId = ref<string | null>(null)
@@ -61,6 +62,9 @@ onMounted(async () => {
         formError.value = 'Không tải được giao dịch.'
       }
     }
+  } else {
+    // Tạo mới: mặc định ngày = hôm nay (người dùng vẫn đổi được).
+    date.value = today
   }
 })
 // Danh mục thành viên khác tạo hiện ra trong picker (đồng bộ ≤ 5s).
@@ -72,6 +76,13 @@ watch(type, () => {
     categoryId.value = null
   }
 })
+
+// Mốc ngày gửi lên API (xem chú thích trong payload). Tạo mới + ngày hôm nay/rỗng
+// → undefined (server now()); ngày quá khứ hoặc chế độ sửa → noon của ngày chọn.
+function transactionDatePayload(): string | undefined {
+  if (!isEdit.value && (!date.value || date.value === today)) return undefined
+  return date.value ? new Date(date.value + 'T12:00:00').toISOString() : undefined
+}
 
 async function submit() {
   fieldErrors.value = {}
@@ -94,7 +105,11 @@ async function submit() {
     category_id: categoryId.value,
     account_id: accountId.value,
     description: description.value.trim() || undefined,
-    transaction_date: date.value ? new Date(date.value + 'T12:00:00').toISOString() : undefined,
+    // Tạo mới với ngày = hôm nay (mặc định) → KHÔNG gửi transaction_date, để server
+    // đóng dấu now() (thời gian thực). Nếu gửi mốc noon cố định, mọi giao dịch nhập
+    // trong ngày sẽ trùng transaction_date → sai thứ tự "mới nhất trước". Chỉ ngày
+    // quá khứ người dùng chọn (hoặc chế độ sửa) mới gửi mốc cụ thể.
+    transaction_date: transactionDatePayload(),
   }
   busy.value = true
   try {
@@ -103,7 +118,7 @@ async function submit() {
     } else {
       await transactions.create(payload)
     }
-    router.push('/')
+    router.push('/ledger')
   } catch (e) {
     handleError(e)
   } finally {
@@ -123,7 +138,7 @@ function handleError(e: unknown) {
     formError.value = 'Giao dịch vừa được thành viên khác sửa — đã tải bản mới nhất, kiểm tra rồi lưu lại.'
   } else if (e.code === 'RECORD_GONE' || e.status === 404) {
     formError.value = 'Giao dịch đã bị xóa bởi thành viên khác.'
-    setTimeout(() => router.push('/'), 1200)
+    setTimeout(() => router.push('/ledger'), 1200)
   } else if (e.field) {
     fieldErrors.value[e.field] = e.message
   } else {
@@ -152,7 +167,7 @@ function handleError(e: unknown) {
 
       <div class="field">
         <label for="amount">Số tiền (₫)</label>
-        <input id="amount" v-model.number="amount" type="number" inputmode="numeric" min="0" step="any" data-testid="amount-input" />
+        <MoneyInput id="amount" v-model="amount" data-testid="amount-input" />
         <p v-if="fieldErrors.amount" class="field-error" data-testid="error-amount">{{ fieldErrors.amount }}</p>
       </div>
 

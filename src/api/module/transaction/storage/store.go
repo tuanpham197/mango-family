@@ -33,10 +33,23 @@ func (s *SQLStore) joinNames(q *gorm.DB) *gorm.DB {
 		Joins("JOIN users ON users.id = transactions.created_by")
 }
 
+// ListFilter — lọc tùy chọn cho sổ (khoảng ngày). nil = không lọc (giữ hành vi cũ).
+type ListFilter struct {
+	From    *time.Time // transaction_date >= From (đầu ngày)
+	EndExcl *time.Time // transaction_date < EndExcl (đầu ngày sau ngày cuối)
+}
+
 // List — sổ chung của hộ, mới nhất trước, một round-trip embed đủ tên hiển thị (D16).
-func (s *SQLStore) List(ctx context.Context, householdID uuid.UUID, paging common.Paging) ([]model.ListItem, int64, error) {
+// f: lọc theo khoảng tháng/năm (tùy chọn) — dùng cho filter màn Giao dịch.
+func (s *SQLStore) List(ctx context.Context, householdID uuid.UUID, paging common.Paging, f ListFilter) ([]model.ListItem, int64, error) {
 	base := s.db.WithContext(ctx).Model(&model.Transaction{}).
 		Where("transactions.household_id = ?", householdID)
+	if f.From != nil {
+		base = base.Where("transactions.transaction_date >= ?", *f.From)
+	}
+	if f.EndExcl != nil {
+		base = base.Where("transactions.transaction_date < ?", *f.EndExcl)
+	}
 
 	var total int64
 	if err := base.Count(&total).Error; err != nil {

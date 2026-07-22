@@ -73,7 +73,7 @@ test('#8 xóa danh mục còn giao dịch → gán lại sang danh mục cùng l
   await page.getByTestId('amount-input').fill('75000')
   await page.getByTestId(`category-option-${victim}`).click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 
   // xóa victim → dialog báo còn giao dịch → chọn gán lại
   await page.goto('/categories')
@@ -86,7 +86,7 @@ test('#8 xóa danh mục còn giao dịch → gán lại sang danh mục cùng l
 
   // victim biến mất; giao dịch chuyển sang target
   await expect(page.getByText(victim)).toHaveCount(0)
-  await page.goto('/')
+  await page.goto('/ledger')
   await expect(page.getByTestId('ledger').getByText(target).first()).toBeVisible()
 })
 
@@ -99,7 +99,7 @@ test('#9 dialog gán lại chỉ liệt kê danh mục cùng loại', async ({ p
   await page.getByTestId('amount-input').fill('12000')
   await page.getByTestId(`category-option-${victim}`).click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 
   await page.goto('/categories')
   await page.getByTestId(`delete-${victim}`).click()
@@ -143,7 +143,7 @@ test('#11 đổi tên danh mục → giao dịch lịch sử hiện tên mới',
   await page.getByTestId('amount-input').fill('33000')
   await page.getByTestId(`category-option-${original}`).click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 
   // đổi tên
   await page.goto('/categories')
@@ -152,6 +152,6 @@ test('#11 đổi tên danh mục → giao dịch lịch sử hiện tên mới',
   await page.getByTestId('save-category').click()
 
   // giao dịch lịch sử hiển thị tên mới (tham chiếu id, không sao chép)
-  await page.goto('/')
+  await page.goto('/ledger')
   await expect(page.getByTestId('ledger').getByText(renamed).first()).toBeVisible()
 })

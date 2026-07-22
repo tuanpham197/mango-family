@@ -5,3 +5,4 @@
 5. Tạo checklist để tránh các dự án khác thiếu thông tin từ đầu
 6. Tạo thêm page profile để có thể setting background của app, bố cục,...
 7. thiết kế cần tương thích với các loại iphone đời mới như: 16, 17 có dinamic island
+8. Ghi giao dịch bằng chụp ảnh, giọng nói

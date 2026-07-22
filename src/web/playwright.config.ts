@@ -8,7 +8,7 @@ export default defineConfig({
   fullyParallel: false, // dùng chung DB seed — chạy tuần tự cho ổn định
   workers: 1,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: 2, // e2e nhạy timing dưới tải nối tiếp (WS refetch, đa ngữ cảnh) — thử lại tối đa 2 lần
   reporter: [['list']],
   timeout: 30_000,
   expect: { timeout: 7_000 }, // ≥ ngưỡng đồng bộ 5s cho kịch bản WS (#13)

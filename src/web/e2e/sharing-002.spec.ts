@@ -16,7 +16,7 @@ test('#11 Alice nhập → Bob thấy trong ≤ 5s kèm "do Alice nhập"', asyn
     await login(alice, USERS.alice.email)
     await login(bob, USERS.bob.email)
 
-    await bob.goto('/') // đang mở sổ, lắng nghe transactions_changed
+    await bob.goto('/ledger') // đang mở sổ, lắng nghe transactions_changed
     await createTransaction(alice, { amount: 60000, category: 'Ăn uống', description: desc })
 
     const row = bob.getByTestId('transaction-row').filter({ hasText: desc })
@@ -43,7 +43,7 @@ test('#13 Carol (hộ B) không thấy giao dịch hộ A; gọi API id hộ A �
     const txnId = (await list.json()).data[0].id
 
     await login(carol, USERS.carol.email)
-    await carol.goto('/')
+    await carol.goto('/ledger')
     await expect(carol.getByText(desc)).toHaveCount(0)
     const res = await carol.request.get(`/api/transactions/${txnId}`)
     expect(res.status()).toBe(404)
@@ -67,12 +67,12 @@ test('#16 Bob sửa được giao dịch do Alice nhập', async ({ browser }) =
     await createTransaction(alice, { amount: 70000, category: 'Ăn uống', description: desc })
 
     await login(bob, USERS.bob.email)
-    await bob.goto('/')
+    await bob.goto('/ledger')
     await bob.getByTestId('transaction-row').filter({ hasText: desc }).first().click()
     await expect(bob.getByRole('heading', { name: 'Sửa giao dịch' })).toBeVisible()
     await bob.getByTestId('amount-input').fill('75000')
     await bob.getByTestId('save-transaction').click()
-    await expect(bob).toHaveURL(/\/$/) // thành công — không cổng quyền
+    await expect(bob).toHaveURL(/\/ledger$/) // thành công — không cổng quyền
   } finally {
     await a?.close()
     await b?.close()
@@ -100,7 +100,7 @@ test('#17 hai thành viên cùng sửa → người sau nhận xung đột, th�
     // Alice lưu trước → thành công
     await alice.getByTestId('amount-input').fill('55000')
     await alice.getByTestId('save-transaction').click()
-    await expect(alice).toHaveURL(/\/$/)
+    await expect(alice).toHaveURL(/\/ledger$/)
 
     // Bob lưu sau với mốc cũ → xung đột, không ghi đè
     await bob.getByTestId('amount-input').fill('99000')
@@ -129,7 +129,7 @@ test('#18 Bob xóa trong khi Alice đang sửa → Alice lưu nhận "không cò
     await openEditByDesc(alice, desc) // Alice mở form sửa
 
     // Bob xóa giao dịch đó
-    await bob.goto('/')
+    await bob.goto('/ledger')
     const row = bob.getByTestId('transaction-row').filter({ hasText: desc }).first()
     const delId = (await row.getByRole('button').getAttribute('data-testid'))!
     await bob.getByTestId(delId).click()
@@ -167,7 +167,7 @@ test('#23 offline khi lưu, bật lại mạng thử lại → chỉ một giao 
 
     await ctx.setOffline(false)
     await page.getByTestId('save-transaction').click()
-    await expect(page).toHaveURL(/\/$/)
+    await expect(page).toHaveURL(/\/ledger$/)
 
     // Chỉ đúng một giao dịch có mô tả này
     const res = await page.request.get('/api/transactions?page_size=1000')
@@ -179,7 +179,7 @@ test('#23 offline khi lưu, bật lại mạng thử lại → chỉ một giao 
 })
 
 async function openEditByDesc(page: Page, desc: string) {
-  await page.goto('/')
+  await page.goto('/ledger')
   await page.getByTestId('transaction-row').filter({ hasText: desc }).first().click()
   await expect(page.getByRole('heading', { name: 'Sửa giao dịch' })).toBeVisible()
 }

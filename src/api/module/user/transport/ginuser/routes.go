@@ -7,6 +7,7 @@ import (
 	"household-finance/api/common"
 	"household-finance/api/component/appctx"
 	"household-finance/api/component/tokenprovider/jwt"
+	"household-finance/api/config"
 	"household-finance/api/middleware"
 	householdstorage "household-finance/api/module/household/storage"
 	userbiz "household-finance/api/module/user/biz"
@@ -15,6 +16,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"time"
 )
+
+// setAuthCookie ghi/xóa cookie JWT theo cấu hình môi trường (Secure/SameSite/
+// Domain). Cross-site (Vercel↔Cloud Run): COOKIE_SAMESITE=none → Secure=true.
+func setAuthCookie(c *gin.Context, value string, maxAge int) {
+	cc := config.Cookie()
+	c.SetSameSite(cc.SameSite)
+	c.SetCookie(jwt.CookieName, value, maxAge, "/", cc.Domain, cc.Secure, true)
+}
 
 type loginReq struct {
 	Email    string `json:"email"`
@@ -40,8 +49,7 @@ func Login(ac appctx.AppContext) gin.HandlerFunc {
 			common.WriteError(c, common.NewInternal(err))
 			return
 		}
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(jwt.CookieName, token, int(jwt.TokenTTL.Seconds()), "/", "", false, true)
+		setAuthCookie(c, token, int(jwt.TokenTTL.Seconds()))
 		common.WriteData(c, http.StatusOK, gin.H{"user": u.Public()})
 	}
 }
@@ -49,8 +57,7 @@ func Login(ac appctx.AppContext) gin.HandlerFunc {
 // Logout — POST /api/auth/logout: xóa cookie.
 func Logout() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.SetSameSite(http.SameSiteLaxMode)
-		c.SetCookie(jwt.CookieName, "", -1, "/", "", false, true)
+		setAuthCookie(c, "", -1)
 		c.Status(http.StatusNoContent)
 	}
 }

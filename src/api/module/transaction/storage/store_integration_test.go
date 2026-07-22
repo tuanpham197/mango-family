@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"household-finance/api/common"
 	categorymodel "household-finance/api/module/category/model"
@@ -106,7 +107,7 @@ func TestTransactionListEmbedsNamesAndScopes(t *testing.T) {
 		HouseholdID: otherHid, CreatedBy: otherOwner, Amount: 11111, Type: common.TypeExpense, CategoryID: otherCat.ID, AccountID: otherAcc,
 	}))
 
-	items, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50})
+	items, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50}, storage.ListFilter{})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total) // cô lập hộ (FR-018)
 	require.Len(t, items, 2)
@@ -115,7 +116,56 @@ func TestTransactionListEmbedsNamesAndScopes(t *testing.T) {
 	assert.Equal(t, "Ăn uống IT", items[0].CategoryName)
 
 	// paging
-	page1, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 1})
+	page1, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 1}, storage.ListFilter{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, page1, 1)
+}
+
+// Filter tháng/năm (ListFilter) — chỉ giao dịch trong khoảng, phân trang trong khoảng.
+func TestTransactionListFilterByMonth(t *testing.T) {
+	db := testDB(t)
+	s := storage.NewSQLStore(db)
+	catStore := categorystorage.NewSQLStore(db)
+	ctx := context.Background()
+
+	hid, owner := newHousehold(t, db)
+	cat := &categorymodel.Category{HouseholdID: hid, Name: "Ăn uống F", Type: common.TypeExpense}
+	require.NoError(t, catStore.Create(ctx, cat))
+	acc := newAccount(t, db, hid)
+
+	mk := func(amount float64, day time.Time) {
+		require.NoError(t, s.Create(ctx, &model.Transaction{
+			HouseholdID: hid, CreatedBy: owner, Amount: amount, Type: common.TypeExpense,
+			CategoryID: cat.ID, AccountID: acc, TransactionDate: day,
+		}))
+	}
+	mk(100000, time.Date(2026, 7, 5, 12, 0, 0, 0, time.UTC))
+	mk(200000, time.Date(2026, 7, 20, 12, 0, 0, 0, time.UTC))
+	mk(300000, time.Date(2026, 6, 15, 12, 0, 0, 0, time.UTC))
+
+	july1 := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	aug1 := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	jun1 := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+
+	// Tháng 7 → 2 giao dịch
+	items, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50}, storage.ListFilter{From: &july1, EndExcl: &aug1})
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), total)
+	assert.Len(t, items, 2)
+
+	// Tháng 6 → 1 giao dịch
+	_, total, err = s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50}, storage.ListFilter{From: &jun1, EndExcl: &july1})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+
+	// Không filter → cả 3
+	_, total, err = s.List(ctx, hid, common.Paging{Page: 1, PageSize: 50}, storage.ListFilter{})
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), total)
+
+	// Phân trang trong filter tháng 7 (page_size=1) → total 2, trả 1
+	page1, total, err := s.List(ctx, hid, common.Paging{Page: 1, PageSize: 1}, storage.ListFilter{From: &july1, EndExcl: &aug1})
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), total)
 	assert.Len(t, page1, 1)

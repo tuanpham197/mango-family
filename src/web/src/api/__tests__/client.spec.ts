@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, api, apiPaged } from '../client'
+import { ApiError, api, apiPaged, setUnauthorizedHandler } from '../client'
 
 describe('api client', () => {
   beforeEach(() => {
@@ -63,9 +63,44 @@ describe('api client', () => {
     expect(spy).toHaveBeenCalledWith(
       '/api/x',
       expect.objectContaining({
-        credentials: 'same-origin',
+        credentials: 'include',
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       }),
     )
+  })
+
+  describe('xử lý 401 (phiên hết hạn)', () => {
+    const un401 = () => {
+      ;(fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+        ok: false,
+        status: 401,
+        json: async () => ({ error: { code: 'UNAUTHENTICATED', message: 'phiên không hợp lệ' } }),
+      })
+    }
+    afterEach(() => setUnauthorizedHandler(() => {})) // gỡ handler giữa các test
+
+    it('401 ở endpoint đã đăng nhập → gọi unauthorizedHandler', async () => {
+      const h = vi.fn()
+      setUnauthorizedHandler(h)
+      un401()
+      await expect(api('/api/transactions')).rejects.toBeInstanceOf(ApiError)
+      expect(h).toHaveBeenCalledTimes(1)
+    })
+
+    it('401 ở /api/me KHÔNG gọi handler (bootstrap phiên)', async () => {
+      const h = vi.fn()
+      setUnauthorizedHandler(h)
+      un401()
+      await expect(api('/api/me')).rejects.toBeInstanceOf(ApiError)
+      expect(h).not.toHaveBeenCalled()
+    })
+
+    it('401 ở /api/auth/login KHÔNG gọi handler (sai mật khẩu)', async () => {
+      const h = vi.fn()
+      setUnauthorizedHandler(h)
+      un401()
+      await expect(api('/api/auth/login', { method: 'POST' })).rejects.toBeInstanceOf(ApiError)
+      expect(h).not.toHaveBeenCalled()
+    })
   })
 })

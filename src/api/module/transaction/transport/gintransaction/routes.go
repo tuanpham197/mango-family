@@ -80,12 +80,17 @@ func Create(ac appctx.AppContext) gin.HandlerFunc {
 	}
 }
 
-// List — GET /api/transactions?page=&page_size= (sổ chung, D16).
+// List — GET /api/transactions?page=&page_size=&from=&to= (sổ chung, D16).
+// from/to (YYYY-MM-DD, inclusive) lọc theo tháng/năm — filter màn Giao dịch.
 func List(ac appctx.AppContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		filter, ok := listFilterFromQuery(c)
+		if !ok {
+			return
+		}
 		store := transactionstorage.NewSQLStore(ac.GetDB())
 		paging := common.PagingFromQuery(c)
-		items, total, err := store.List(c.Request.Context(), middleware.HouseholdID(c), paging)
+		items, total, err := store.List(c.Request.Context(), middleware.HouseholdID(c), paging, filter)
 		if err != nil {
 			common.WriteError(c, common.NewInternal(err))
 			return
@@ -93,6 +98,29 @@ func List(ac appctx.AppContext) gin.HandlerFunc {
 		paging.Total = total
 		c.JSON(http.StatusOK, common.PagedResponse(items, paging))
 	}
+}
+
+// listFilterFromQuery — đọc ?from=&to= (YYYY-MM-DD). Cả hai bỏ trống → không lọc.
+// to → EndExcl = đầu ngày sau `to` (bao trọn ngày cuối). Sai định dạng / to<from → 400.
+func listFilterFromQuery(c *gin.Context) (transactionstorage.ListFilter, bool) {
+	var f transactionstorage.ListFilter
+	fromStr, toStr := c.Query("from"), c.Query("to")
+	if fromStr == "" && toStr == "" {
+		return f, true
+	}
+	from, err1 := time.ParseInLocation("2006-01-02", fromStr, time.Local)
+	to, err2 := time.ParseInLocation("2006-01-02", toStr, time.Local)
+	if err1 != nil || err2 != nil {
+		common.WriteError(c, common.NewBadRequest("from/to phải theo định dạng YYYY-MM-DD"))
+		return f, false
+	}
+	if to.Before(from) {
+		common.WriteError(c, common.NewBadRequest("ngày kết thúc không được trước ngày bắt đầu").WithField("to"))
+		return f, false
+	}
+	endExcl := to.AddDate(0, 0, 1)
+	f.From, f.EndExcl = &from, &endExcl
+	return f, true
 }
 
 // Get — GET /api/transactions/:id (prefill form sửa; ngoài hộ → 404).

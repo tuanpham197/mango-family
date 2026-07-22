@@ -100,11 +100,20 @@ h1 {
 .field select,
 .field textarea {
   width: 100%;
+  min-width: 0; /* cho phép co lại trong flex/grid, tránh tràn ngang */
+  max-width: 100%;
   padding: 10px 12px;
   border: 1.5px solid var(--border);
   border-radius: 10px;
   font: inherit;
   background: var(--card);
+}
+
+/* iOS/WebKit: input[type=date] có chiều rộng nội tại (bỏ qua width:100%) →
+   tràn khỏi màn hình trên mobile. Bỏ appearance mặc định để tôn trọng khung. */
+.field input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .field input:focus,

@@ -15,10 +15,18 @@ function notifyAll() {
   for (const set of handlers.values()) for (const h of set) h()
 }
 
+// URL của /ws: prod tách origin dùng VITE_API_BASE_URL (đổi http→ws, https→wss);
+// dev/same-origin dùng host hiện tại (Vite proxy /ws → :8080).
+function wsUrl(): string {
+  const base = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
+  if (base) return base.replace(/^http/, 'ws') + '/ws'
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${proto}://${location.host}/ws`
+}
+
 function connect() {
   if (socket || handlers.size === 0) return
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws'
-  const ws = new WebSocket(`${proto}://${location.host}/ws`)
+  const ws = new WebSocket(wsUrl())
   socket = ws
   ws.onopen = () => {
     // Sau khi nối lại có thể đã lỡ event — refetch toàn bộ cho chắc.

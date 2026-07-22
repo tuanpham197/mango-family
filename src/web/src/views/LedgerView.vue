@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import type { Transaction } from '../api/types'
 import AccountBalanceChip from '../components/AccountBalanceChip.vue'
 import DeleteTransactionDialog from '../components/DeleteTransactionDialog.vue'
+import TransactionFilter from '../components/TransactionFilter.vue'
 import { useAuthStore } from '../stores/auth'
 import { useTransactionsStore } from '../stores/transactions'
 import { useInvalidation } from '../composables/useInvalidation'
@@ -18,7 +19,7 @@ const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
-  transactions.fetch()
+  // Lần tải đầu do TransactionFilter phát khoảng mặc định (tháng này) → setRange → fetch.
   // Infinite scroll: nạp trang kế khi chạm sentinel cuối danh sách (D16).
   observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting) transactions.loadMore()
@@ -27,8 +28,13 @@ onMounted(() => {
 })
 onUnmounted(() => observer?.disconnect())
 
-// Sổ chung: giao dịch thành viên khác nhập/sửa/xóa hiện ra ≤ 5s (SC-006, D8).
+// Sổ chung: giao dịch thành viên khác nhập/sửa/xóa hiện ra ≤ 5s (SC-006, D8) — giữ filter.
 useInvalidation('transactions_changed', () => transactions.fetch())
+
+// Đổi filter tháng/năm → tải lại sổ theo khoảng đã chọn (infinite scroll cũng theo khoảng).
+function onFilter(from: string, to: string) {
+  transactions.setRange(from, to)
+}
 
 function fmt(amount: number, type: string) {
   const n = new Intl.NumberFormat('vi-VN').format(amount)
@@ -65,11 +71,13 @@ async function logout() {
 
     <AccountBalanceChip />
 
+    <TransactionFilter @change="onFilter" />
+
     <div v-if="notice" class="form-error" data-testid="notice">{{ notice }}</div>
 
     <div class="card" data-testid="ledger">
       <p v-if="transactions.items.length === 0 && !transactions.loading" class="muted" data-testid="empty-ledger">
-        Chưa có giao dịch nào — bấm ＋ để nhập giao dịch đầu tiên.
+        Không có giao dịch nào trong khoảng đã chọn — thử đổi tháng/năm hoặc bấm ＋ để nhập.
       </p>
       <div
         v-for="t in transactions.items"

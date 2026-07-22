@@ -28,6 +28,14 @@ const (
 	ErrCodeAccountRequired          = "ACCOUNT_REQUIRED"
 	ErrCodeAccountHouseholdMismatch = "ACCOUNT_HOUSEHOLD_MISMATCH"
 	ErrCodeFutureDateNotAllowed     = "FUTURE_DATE_NOT_ALLOWED"
+
+	// Budget (003) — tái dùng CATEGORY_REQUIRED/CATEGORY_TYPE_MISMATCH của 001/002;
+	// CONCURRENCY_CONFLICT/RECORD_GONE đã có ở lỗi chung.
+	ErrCodeLimitInvalid              = "LIMIT_INVALID"
+	ErrCodeCategoryHouseholdMismatch = "CATEGORY_HOUSEHOLD_MISMATCH"
+	ErrCodeCategoryNotAllowedTotal   = "CATEGORY_NOT_ALLOWED_FOR_TOTAL"
+	ErrCodePeriodInvalid             = "PERIOD_INVALID"
+	ErrCodeBudgetDuplicate           = "BUDGET_DUPLICATE"
 )
 
 // Account types (002 — BR-ACC-001)
@@ -43,6 +51,7 @@ const (
 	TopicCategoriesChanged   = "categories_changed"
 	TopicTransactionsChanged = "transactions_changed"
 	TopicAccountsChanged     = "accounts_changed"
+	TopicBudgetsChanged      = "budgets_changed" // 003 (D26)
 )
 
 // Gin context keys

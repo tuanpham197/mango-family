@@ -53,10 +53,10 @@ test('#14 Alice nhập giao dịch → Bob thấy "do Alice nhập"', async ({ b
     await alicePage.getByTestId('amount-input').fill(amount)
     await alicePage.getByTestId(`category-option-${cat}`).click()
     await alicePage.getByTestId('save-transaction').click()
-    await expect(alicePage).toHaveURL(/\/$/)
+    await expect(alicePage).toHaveURL(/\/ledger$/)
 
     // Bob mở sổ → thấy giao dịch của Alice kèm authorship (WS refetch)
-    await bobPage.goto('/')
+    await bobPage.goto('/ledger')
     const row = bobPage.getByTestId('transaction-row').filter({ hasText: cat })
     await expect(row.first()).toContainText('do Alice nhập')
   } finally {

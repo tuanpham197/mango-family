@@ -13,35 +13,49 @@ export interface TransactionInput {
 
 const PAGE_SIZE = 50
 
+// URL sổ chung + phân trang + filter khoảng (from/to) tùy chọn — filter tháng/năm.
+function listUrl(page: number, from: string, to: string): string {
+  const range = from && to ? `&from=${from}&to=${to}` : ''
+  return `/api/transactions?page=${page}&page_size=${PAGE_SIZE}${range}`
+}
+
 export const useTransactionsStore = defineStore('transactions', {
   state: () => ({
     items: [] as Transaction[],
     paging: null as Paging | null,
     loading: false,
     submitting: false, // chống double-submit (quickstart #23)
+    from: '' as string, // filter khoảng (YYYY-MM-DD); rỗng = không lọc
+    to: '' as string,
   }),
   getters: {
     hasMore: (s) => (s.paging ? s.items.length < s.paging.total : false),
   },
   actions: {
-    // Tải trang 1 (làm mới sổ) — dùng cho realtime refetch.
+    // Đặt filter khoảng tháng/năm rồi tải lại trang 1 (from/to rỗng = xem tất cả).
+    async setRange(from: string, to: string) {
+      this.from = from
+      this.to = to
+      await this.fetch()
+    },
+    // Tải trang 1 (làm mới sổ) — dùng cho realtime refetch; giữ nguyên filter hiện tại.
     async fetch() {
       this.loading = true
       try {
-        const res = await apiPaged<Transaction[]>(`/api/transactions?page=1&page_size=${PAGE_SIZE}`)
+        const res = await apiPaged<Transaction[]>(listUrl(1, this.from, this.to))
         this.items = res.data
         this.paging = res.paging ?? null
       } finally {
         this.loading = false
       }
     },
-    // Nạp thêm trang kế (infinite scroll — D16).
+    // Nạp thêm trang kế (infinite scroll — D16); giữ nguyên filter khoảng.
     async loadMore() {
       if (!this.paging || this.loading || !this.hasMore) return
       this.loading = true
       try {
         const next = this.paging.page + 1
-        const res = await apiPaged<Transaction[]>(`/api/transactions?page=${next}&page_size=${PAGE_SIZE}`)
+        const res = await apiPaged<Transaction[]>(listUrl(next, this.from, this.to))
         this.items.push(...res.data)
         this.paging = res.paging ?? this.paging
       } finally {

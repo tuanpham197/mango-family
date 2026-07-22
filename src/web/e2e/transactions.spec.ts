@@ -45,7 +45,7 @@ test('#4 tạo nhanh danh mục trong luồng nhập → mang loại đang chọ
   // lưu được luôn
   await page.getByTestId('amount-input').fill('20000')
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 
   // danh mục mới là loại Chi (hiện ở tab Chi của màn quản lý)
   await page.goto('/categories')
@@ -66,7 +66,7 @@ test('#12 học từ lịch sử → gợi ý danh mục cùng loại theo mô t
   await page.getByTestId('description-input').fill(keyword)
   await page.getByTestId(`category-option-${cat}`).click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
 
   // lần nhập sau: mô tả chứa keyword → hiện chip gợi ý, bấm để điền
   await page.goto('/transactions/new')

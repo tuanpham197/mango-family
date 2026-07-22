@@ -4,13 +4,15 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -o /server .
+# Chỉ build API (web deploy riêng trên Vercel). Static binary, không CGO.
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /server .
 
 # Run stage
 FROM alpine:3.20
 WORKDIR /app
+# ca-certificates: cần để xác thực TLS khi kết nối Supabase (sslmode=require).
+RUN apk add --no-cache ca-certificates
 COPY --from=build /server /app/server
-# web/dist copy vào image ở bước CI (Go serve SPA — design §3)
 ENV PORT=8080
 EXPOSE 8080
 ENTRYPOINT ["/app/server"]

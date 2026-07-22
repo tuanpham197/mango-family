@@ -4,7 +4,10 @@ import (
 	"household-finance/api/component/appctx"
 	"household-finance/api/middleware"
 	"household-finance/api/module/account/transport/ginaccount"
+	"household-finance/api/module/budget/transport/ginbudget"
 	"household-finance/api/module/category/transport/gincategory"
+	"household-finance/api/module/overview/transport/ginoverview"
+	"household-finance/api/module/report/transport/ginreport"
 	"household-finance/api/module/transaction/transport/gintransaction"
 	"household-finance/api/module/user/transport/ginuser"
 
@@ -13,6 +16,9 @@ import (
 
 // registerRoutes — đăng ký route các module (mẫu learn_go main_route).
 func registerRoutes(r *gin.Engine, ac appctx.AppContext) {
+	// Health check (public) — xác minh app sống + DB kết nối được.
+	r.GET("/healthz", healthz(ac))
+
 	api := r.Group("/api")
 
 	// Public
@@ -36,6 +42,14 @@ func registerRoutes(r *gin.Engine, ac appctx.AppContext) {
 	scoped.GET("/transactions/:id", gintransaction.Get(ac))
 	scoped.PATCH("/transactions/:id", gintransaction.Update(ac))
 	scoped.DELETE("/transactions/:id", gintransaction.Delete(ac))
+	scoped.POST("/budgets", ginbudget.Create(ac))
+	scoped.GET("/budgets", ginbudget.List(ac))
+	scoped.GET("/budgets/:id", ginbudget.Get(ac))
+	scoped.PATCH("/budgets/:id", ginbudget.Update(ac))
+	scoped.DELETE("/budgets/:id", ginbudget.Delete(ac))
+	scoped.GET("/overview", ginoverview.Get(ac))                // 004: tổng hợp giá trị suy ra màn Tổng quan
+	scoped.GET("/reports/overview", ginreport.Overview(ac))     // 005: báo cáo tổng quan
+	scoped.GET("/reports/category/:id", ginreport.Category(ac)) // 005: báo cáo chi tiết danh mục
 
 	// WebSocket invalidation hub (D8)
 	r.GET("/ws", middleware.Authenticate(ac), middleware.RequireHousehold(ac), func(c *gin.Context) {

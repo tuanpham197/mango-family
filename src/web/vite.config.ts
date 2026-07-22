@@ -10,6 +10,10 @@ export default defineConfig({
       '/api': 'http://localhost:8080',
       '/ws': { target: 'ws://localhost:8080', ws: true },
     },
+    allowedHosts: [
+      '9ba8-118-70-241-180.ngrok-free.app',
+      'a48d-118-70-241-180.ngrok-free.app'
+    ] 
   },
   test: {
     environment: 'jsdom',

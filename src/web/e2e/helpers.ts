@@ -26,7 +26,10 @@ export async function login(page: Page, email: string, password = DEV_PASSWORD) 
   await page.getByTestId('login-email').fill(email)
   await page.getByTestId('login-password').fill(password)
   await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('household-name')).toBeVisible()
+  await expect(page.getByTestId('household-name')).toBeVisible() // đăng nhập xong → màn Tổng quan (/)
+  // 001/002/003 thao tác trên sổ giao dịch → điều hướng tới /ledger (route mới 004)
+  await page.goto('/ledger')
+  await expect(page.getByTestId('ledger')).toBeVisible()
 }
 
 /** Tạo giao dịch qua UI form (002): account chọn sẵn khi hộ có 1 tài khoản. */
@@ -41,7 +44,39 @@ export async function createTransaction(
   if (opts.description) await page.getByTestId('description-input').fill(opts.description)
   await page.getByTestId(`category-option-${opts.category}`).click()
   await page.getByTestId('save-transaction').click()
-  await expect(page).toHaveURL(/\/$/)
+  await expect(page).toHaveURL(/\/ledger$/)
+}
+
+/** Tạo ngân sách qua UI form; đợi lưu xong (điều hướng về /budgets) rồi trả về. */
+export async function createBudget(
+  page: Page,
+  opts: {
+    type?: 'CATEGORY' | 'TOTAL'
+    category?: string
+    limit: number
+    period?: 'MONTHLY' | 'WEEKLY' | 'ONE_TIME'
+    start?: string
+    end?: string
+  },
+) {
+  await page.goto('/budgets/new')
+  if (opts.type === 'TOTAL') await page.getByTestId('type-total').click()
+  await page.getByTestId('limit-input').fill(String(opts.limit))
+  if (opts.period) await page.getByTestId('period-select').selectOption(opts.period)
+  if (opts.type !== 'TOTAL' && opts.category) {
+    await page.getByTestId(`category-option-${opts.category}`).click()
+  }
+  if (opts.period === 'ONE_TIME') {
+    if (opts.start) await page.getByTestId('start-date-input').fill(opts.start)
+    if (opts.end) await page.getByTestId('end-date-input').fill(opts.end)
+  }
+  await page.getByTestId('save-budget').click()
+  await expect(page).toHaveURL(/\/budgets$/)
+}
+
+/** Dòng ngân sách theo nhãn (tên danh mục / "Tổng chi tiêu"). */
+export function budgetRow(page: Page, label: string) {
+  return page.getByTestId('budget-row').filter({ hasText: label })
 }
 
 /** Tạo danh mục qua UI form; đợi lưu xong (điều hướng về /categories) rồi mới trả về. */
