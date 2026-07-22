@@ -32,7 +32,8 @@ body {
 
 .app-main {
   flex: 1;
-  padding: 16px 16px 84px;
+  /* chừa chỗ cho bottom-nav cố định + vùng an toàn (home indicator) */
+  padding: 16px 16px calc(84px + env(safe-area-inset-bottom));
 }
 
 h1 {
@@ -53,7 +54,7 @@ h1 {
   align-items: center;
   background: var(--card);
   border-top: 1.5px solid var(--border);
-  padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  padding: 8px 16px calc(12px + env(safe-area-inset-bottom));
 }
 
 .nav-item {
