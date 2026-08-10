@@ -27,6 +27,20 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 - Ghi một dòng vào History/Changelog của artifact (vd BR có `## History`).
 - Chạy `/speckit-analyze` để phát hiện lệch nhau giữa spec ↔ plan ↔ tasks sau khi cập nhật.
 
+## Quy trình phát triển tính năng (BẮT BUỘC theo)
+
+Khi làm **một tính năng mới** (hoặc mở rộng lớn), tuân theo guide đầy đủ:
+[`docs/feature-development-workflow.md`](docs/feature-development-workflow.md). Tóm tắt thứ tự:
+**BR → use case → `/speckit-specify` → (`/speckit-clarify`) → `/speckit-plan` → `/speckit-tasks` →
+`/speckit-analyze` (gate: hết CRITICAL) → `/speckit-implement` (TDD) → verify (`make test` ·
+`make test-api-integration` · `make test-e2e`) → review (`/code-review` · `/security-review`) →
+commit + merge `develop` → `release/notes/YYYY-MM-DD-<slug>.md` → deploy (`deploy/api` · `deploy/web`,
+xem [`release/DEPLOY.md`](release/DEPLOY.md))**.
+- **Bằng chứng trước khẳng định**: chỉ tick "xong"/✅ sau khi chạy lệnh và thấy output xanh.
+- **Không nhảy bước** (`/speckit-tasks` cần `plan.md`; `/speckit-analyze`/`/speckit-implement` cần `tasks.md`).
+- **Đánh số** feature dir/UC/branch **khớp số BR** (bài học lệch BR-006↔005).
+- **Deploy**: không chạy migration trừ khi release có migration mới; chỉ commit/push/merge/deploy khi user yêu cầu.
+
 <!-- SPECKIT START -->
 For technologies, project structure, and other important context, read the current plan:
 `specs/008-member-reports/plan.md` (Go+Vue, 2026-08-10) — read-only **per-member report** extending the
