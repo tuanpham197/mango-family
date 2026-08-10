@@ -131,6 +131,94 @@ func (s *SQLStore) CategoryTransactions(ctx context.Context, householdID uuid.UU
 	return items, err
 }
 
+// ─── Feature 008: báo cáo THEO THÀNH VIÊN (chỉ đọc) ─────────────────────────
+
+// ListMembers — thành viên HIỆN TẠI của hộ (household_members JOIN users), kèm email
+// để fallback tên hiển thị (D43/D46). Sắp theo tên cho ổn định.
+func (s *SQLStore) ListMembers(ctx context.Context, householdID uuid.UUID) ([]model.MemberInfo, error) {
+	items := []model.MemberInfo{}
+	err := s.db.WithContext(ctx).Table("household_members hm").
+		Select("u.id AS id, u.display_name AS display_name, u.email AS email").
+		Joins("JOIN users u ON u.id = hm.user_id").
+		Where("hm.household_id = ?", householdID).
+		Order("u.display_name, u.email").
+		Scan(&items).Error
+	return items, err
+}
+
+// FindMember — thành viên hiện tại của hộ theo id. found=false khi không thuộc hộ /
+// không tồn tại (biz → 404, chống dò — D48/FR-008).
+func (s *SQLStore) FindMember(ctx context.Context, householdID, userID uuid.UUID) (model.MemberInfo, bool, error) {
+	var m model.MemberInfo
+	err := s.db.WithContext(ctx).Table("household_members hm").
+		Select("u.id AS id, u.display_name AS display_name, u.email AS email").
+		Joins("JOIN users u ON u.id = hm.user_id").
+		Where("hm.household_id = ? AND hm.user_id = ?", householdID, userID).
+		Limit(1).Scan(&m).Error
+	if err != nil {
+		return model.MemberInfo{}, false, err
+	}
+	return m, m.ID != uuid.Nil, nil
+}
+
+// MemberSums — Σ thu / Σ chi của hộ trong [from, endExcl) GROUP BY created_by (D42).
+// Trả CHỈ những `created_by` có giao dịch; biz zero-fill thành viên hiện tại còn lại (D43).
+func (s *SQLStore) MemberSums(ctx context.Context, householdID uuid.UUID, from, endExcl time.Time) ([]model.MemberAggRow, error) {
+	rows := []model.MemberAggRow{}
+	err := s.inRange(householdID, from, endExcl).WithContext(ctx).
+		Where("type IN ?", []string{common.TypeIncome, common.TypeExpense}).
+		Select("created_by, "+
+			"COALESCE(SUM(amount) FILTER (WHERE type = ?), 0) AS income, "+
+			"COALESCE(SUM(amount) FILTER (WHERE type = ?), 0) AS expense",
+			common.TypeIncome, common.TypeExpense).
+		Group("created_by").Scan(&rows).Error
+	return rows, err
+}
+
+// memberTxnQuery — cơ sở liệt kê giao dịch của hộ trong khoảng, embed tên danh mục ·
+// tài khoản · người nhập (dùng lại ListItem 002 — D47). Lọc created_by áp ở caller.
+func (s *SQLStore) memberTxnQuery(ctx context.Context, householdID uuid.UUID, from, endExcl time.Time) *gorm.DB {
+	return s.db.WithContext(ctx).Table("transactions").
+		Joins("JOIN categories ON categories.id = transactions.category_id").
+		Joins("JOIN accounts ON accounts.id = transactions.account_id").
+		Joins("JOIN users ON users.id = transactions.created_by").
+		Where("transactions.household_id = ? AND transactions.transaction_date >= ? AND transactions.transaction_date < ?",
+			householdID, from, endExcl)
+}
+
+const memberTxnSelect = "transactions.*, categories.name AS category_name, " +
+	"accounts.name AS account_name, users.display_name AS created_by_name"
+
+// MemberTransactions — giao dịch của MỘT thành viên (created_by = userID) trong khoảng,
+// mới nhất trước, phân trang (D47/FR-006/FR-007).
+func (s *SQLStore) MemberTransactions(ctx context.Context, householdID, userID uuid.UUID, from, endExcl time.Time, paging common.Paging) ([]transactionmodel.ListItem, int64, error) {
+	base := s.memberTxnQuery(ctx, householdID, from, endExcl).Where("transactions.created_by = ?", userID)
+	return scanTxnPage(base, paging)
+}
+
+// FormerMemberTransactions — giao dịch của người ĐÃ RỜI hộ (created_by ∉ thành viên hiện
+// tại) trong khoảng, phân trang (D44). currentIDs rỗng → không loại trừ ai.
+func (s *SQLStore) FormerMemberTransactions(ctx context.Context, householdID uuid.UUID, currentIDs []uuid.UUID, from, endExcl time.Time, paging common.Paging) ([]transactionmodel.ListItem, int64, error) {
+	base := s.memberTxnQuery(ctx, householdID, from, endExcl)
+	if len(currentIDs) > 0 {
+		base = base.Where("transactions.created_by NOT IN ?", currentIDs)
+	}
+	return scanTxnPage(base, paging)
+}
+
+// scanTxnPage — đếm tổng + lấy trang giao dịch (mới nhất trước) dùng chung member/former.
+func scanTxnPage(base *gorm.DB, paging common.Paging) ([]transactionmodel.ListItem, int64, error) {
+	var total int64
+	if err := base.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	items := []transactionmodel.ListItem{}
+	err := base.Select(memberTxnSelect).
+		Order("transactions.transaction_date DESC, transactions.id DESC").
+		Limit(paging.PageSize).Offset(paging.Offset()).Scan(&items).Error
+	return items, total, err
+}
+
 // CategoryTrend — Σ chi của tập danh mục theo mốc date_trunc(unit) (D36/D38).
 func (s *SQLStore) CategoryTrend(ctx context.Context, householdID uuid.UUID, categoryIDs []uuid.UUID, from, endExcl time.Time, unit string) ([]model.CategoryTrendRow, error) {
 	rows := []model.CategoryTrendRow{}

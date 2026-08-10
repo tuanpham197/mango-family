@@ -16,7 +16,7 @@ GOOSE             ?= goose
 
 .PHONY: help tools up down ps logs clean-db \
         migrate-up migrate-down migrate-status migrate-create \
-        seed api dev-api web dev build \
+        seed seed-prod api dev-api web dev build \
         test-api test-api-integration test-web test-e2e test
 
 help: ## Liệt kê các lệnh
@@ -62,6 +62,10 @@ migrate-create: ## Tạo migration mới: make migrate-create name=ten_migration
 # ---- App (dev) ----
 seed: ## Seed dev: Alice/Bob (hộ A), Carol (hộ B) + danh mục & tài khoản mặc định
 	cd api && DATABASE_URL="$(DATABASE_URL)" go run ./cmd/seed
+
+seed-prod: ## Seed tài khoản thật từ deploy/seed.env (cần DATABASE_URL=<Supabase>)
+	@test -f deploy/seed.env || (echo "Thiếu deploy/seed.env — copy từ deploy/seed.env.example"; exit 1)
+	cd api && set -a && . ../deploy/seed.env && set +a && DATABASE_URL="$(DATABASE_URL)" go run ./cmd/seed
 
 api: ## Chạy Go API (Gin, cổng 8080)
 	cd api && DATABASE_URL="$(DATABASE_URL)" go run .

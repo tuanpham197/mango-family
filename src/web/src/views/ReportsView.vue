@@ -5,18 +5,27 @@ import TimeRangePicker from '../components/TimeRangePicker.vue'
 import CategoryBreakdownChart from '../components/CategoryBreakdownChart.vue'
 import TrendChart from '../components/TrendChart.vue'
 import CategoryDetailPanel from '../components/CategoryDetailPanel.vue'
+import MemberBreakdown from '../components/MemberBreakdown.vue'
+import MemberTransactionsPanel from '../components/MemberTransactionsPanel.vue'
 
-// Màn Báo cáo (feature 005) — thay placeholder của 004. Tổng quan theo khoảng + phân bổ
-// danh mục + xu hướng + drill-in chi tiết danh mục. Realtime cơ hội (D40).
+// Màn Báo cáo (feature 005 + 008) — Tổng quan theo khoảng + phân bổ danh mục + xu hướng +
+// drill-in danh mục; và báo cáo THEO THÀNH VIÊN + drill-in giao dịch thành viên. Realtime cơ hội (D40).
 const reports = useReportsStore()
 
 async function onRange(from: string, to: string) {
   reports.setRange(from, to)
   reports.closeCategory()
-  await reports.loadOverview()
+  reports.closeMember()
+  await Promise.all([reports.loadOverview(), reports.loadMembers()])
 }
 async function onSelect(id: string) {
   await reports.openCategory(id)
+}
+async function onSelectMember(id: string) {
+  await reports.openMember(id, 1)
+}
+async function onMemberPage(page: number) {
+  if (reports.memberDetail) await reports.openMember(reports.memberDetail.member_id, page)
 }
 
 useInvalidation('transactions_changed', () => reports.refresh())
@@ -54,6 +63,14 @@ function money(n: number) {
       <CategoryBreakdownChart :items="reports.overview.category_breakdown" @select="onSelect" />
       <TrendChart :trend="reports.overview.trend" />
       <CategoryDetailPanel v-if="reports.category" :report="reports.category" @close="reports.closeCategory()" />
+
+      <MemberBreakdown v-if="reports.members" :report="reports.members" @select="onSelectMember" />
+      <MemberTransactionsPanel
+        v-if="reports.memberDetail"
+        :report="reports.memberDetail"
+        @close="reports.closeMember()"
+        @page="onMemberPage"
+      />
     </template>
 
     <p v-else-if="reports.loading" class="muted">Đang tải…</p>

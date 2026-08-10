@@ -1,9 +1,10 @@
-@startuml Use Cases — Sổ tài chính hộ gia đình (feature 001 + 002 + 003)
+@startuml Use Cases — Sổ tài chính hộ gia đình (feature 001 + 002 + 003 + 008)
 ' Nguồn: specs/use-cases/<feature>/*.md · specs/001-*/spec.md · specs/002-*/spec.md · specs/003-*/spec.md
 ' 2026-06-29: app DÙNG CHUNG trong hộ gia đình, nhiều thành viên, quyền ngang nhau.
 ' 2026-07-06: thêm feature 002 (UC-TRK-01..05); người dùng là danh sách độc lập (FR-015/002).
 ' 2026-07-10: re-platform Go+Vue — bỏ chú thích RLS (cơ chế stack cũ); 001 → re-implementation pending.
 ' 2026-07-13: thêm feature 003 (UC-BGT-01..06) — ngân sách theo danh mục/tổng, tiến độ & cảnh báo.
+' 2026-08-10: thêm feature 008 (UC-MBR-01..02) — báo cáo thu/chi theo thành viên (mở rộng 005-reports/BR-008).
 left to right direction
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -45,6 +46,11 @@ rectangle "Feature 003 — Thiết lập ngân sách" {
     usecase "UC-BGT-06\nXóa ngân sách (có xác nhận)" as BGT06
 }
 
+rectangle "Feature 008 — Báo cáo thu chi theo thành viên (mở rộng 005-reports)" {
+    usecase "UC-MBR-01\nXem báo cáo thu/chi theo từng thành viên" as MBR01
+    usecase "UC-MBR-02\nXem danh sách giao dịch của một thành viên" as MBR02
+}
+
 rectangle "Tiền đề: Quản lý hộ gia đình (feature riêng — BR đề xuất)" #EEEEEE {
     usecase "UC-HH-01\nTạo hộ gia đình" as HH01
     usecase "UC-HH-02\nMời thành viên" as HH02
@@ -70,6 +76,8 @@ member --> BGT03
 member --> BGT04
 member --> BGT05
 member --> BGT06
+member --> MBR01
+member --> MBR02
 member --> HH01
 member --> HH02
 member --> HH03
@@ -90,6 +98,12 @@ BGT06 ..> BGT03 : «extend»
 ' Phụ thuộc dữ liệu (không phải «include»/«extend»): tiến độ ngân sách SUY RA
 ' từ giao dịch Chi (tạo/sửa/xóa qua TRK-02/04/05); ngân sách chỉ ĐỌC, không đổi.
 BGT03 ..> TRK02 : đọc giao dịch Chi\n(tiến độ suy ra)
+
+' Feature 008 — báo cáo theo thành viên
+MBR02 ..> MBR01 : «extend»\n(drill-down 1 thành viên)
+' Phụ thuộc dữ liệu: số liệu theo thành viên SUY RA từ giao dịch (created_by);
+' báo cáo chỉ ĐỌC, không đổi dữ liệu nguồn.
+MBR01 ..> TRK02 : đọc giao dịch theo\ncreated_by (suy ra)
 
 note bottom of TRK01
   Nguồn định danh duy nhất (danh sách người dùng
@@ -125,6 +139,14 @@ note bottom of BGT03
   Tiến độ = tổng giao dịch Chi trong kỳ (danh mục +
   danh mục con, hoặc toàn bộ chi với ngân sách tổng);
   giá trị SUY RA, tính lại khi giao dịch đổi (FR-005/006).
+end note
+
+note bottom of MBR01
+  Quy thuộc theo THÀNH VIÊN ĐÃ NHẬP (created_by),
+  không suy người thực nhận/chi; thành viên không
+  giao dịch = 0/0/0; tổng các dòng KHỚP tổng hộ.
+  Giao dịch của người ĐÃ RỜI hộ → gộp dòng
+  "Thành viên cũ" (Option A, FR-010) để tổng luôn khớp.
 end note
 
 note as N1

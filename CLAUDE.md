@@ -29,12 +29,14 @@ Khi sửa MỘT artifact, phải rà soát & cập nhật các artifact dẫn xu
 
 <!-- SPECKIT START -->
 For technologies, project structure, and other important context, read the current plan:
-`specs/005-reports/plan.md` (Go+Vue, 2026-07-15) — read-only Reports (overview: income/expense/net +
-category-distribution + trend charts; per-category detail) over a selectable date range, on the
-implemented 001–004 foundation; **adds the first new FE dependency `chart.js`** (thin in-house Vue
-wrapper). Base stack/structure context in `specs/001-transaction-categorization/plan.md`. Stack
-decisions are authoritative in the re-platform design:
-`docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md`
+`specs/008-member-reports/plan.md` (Go+Vue, 2026-08-10) — read-only **per-member report** extending the
+implemented 005-reports `module/report`: income/expense/net grouped by `transactions.created_by` over a
+selectable date range, all current members shown (0/0/0 if none), former-members folded into one
+reconciling "Thành viên cũ" bucket (FR-010 Option A), plus paginated per-member transaction drill-in.
+**No new dependency, no migration** (2 new read endpoints `GET /api/reports/members` · `/member/:id`).
+Reports-feature base context: `specs/005-reports/plan.md` (adds the FE dep `chart.js`, reused here).
+Base stack/structure context in `specs/001-transaction-categorization/plan.md`. Stack decisions are
+authoritative in the re-platform design: `docs/superpowers/specs/2026-07-09-go-vue-replatform-design.md`
 
 > ⚠️ **Re-platform (2026-07-09/10)**: Flutter + Supabase have been REMOVED (code in `src/` deleted;
 > recoverable via git history). New stack: **Go API (Gin + GORM + WebSocket, migrations via goose)
@@ -90,6 +92,15 @@ Feature status:
   `chart.js`** (bọc wrapper Vue mỏng `components/charts/`). Còn mở: xuất PDF/Excel, forecasting, benchmark
   (Out of Scope BR); **số hiệu BR lệch**: file `specs/business-requirements/BR-006.md` mang ID nội bộ
   "BR-004" (không có BR-004.md) — cần nghiệp vụ thống nhất.
+- **008-member-reports**: 📝 **planned (spec + plan + design)** — chưa triển khai. Mở rộng màn Báo cáo
+  (005) với phần **theo thành viên**: tổng Thu/Chi/ròng nhóm theo `transactions.created_by` cho khoảng
+  chọn được; mọi thành viên hiện tại đều hiện (0/0/0 nếu không có GD); giao dịch của người đã rời hộ gộp
+  một dòng **"Thành viên cũ"** để đối soát tổng hộ luôn đúng (FR-010 Option A, giải BR-008 Open Q#1); drill-in
+  danh sách giao dịch của một thành viên (phân trang). Module **read-only** `report` mở rộng với 2 endpoint
+  `GET /api/reports/members` + `/api/reports/member/:id` (SQL `SUM ... GROUP BY created_by`, LEFT JOIN
+  `household_members`; **không bảng/migration, không dependency mới**; drill-in thêm bộ lọc `created_by`
+  vào `transaction ListFilter`). UC: `specs/use-cases/008-member-reports/` (UC-MBR-01/02). Còn mở: Owner/Target
+  Quarter (TBD); rời hộ chưa hiện thực nên bucket former hiện là xử lý phòng thủ.
 
 Model (unchanged): **shared family household** — multiple members, EQUAL permissions; data shared
 per `household_id`, isolated across households. **Users are an INDEPENDENT directory** — the single
