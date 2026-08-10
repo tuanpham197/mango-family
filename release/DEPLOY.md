@@ -24,7 +24,7 @@ develop ──(cắt release)──┬──▶ deploy/api  ──▶ Cloud Run 
 ## Checklist trước mỗi release
 
 - [ ] `develop` xanh: `cd src && make test` (Go unit + Vitest) · `make test-api-integration` · `make test-e2e`.
-- [ ] Cập nhật [`release/RELEASE-NOTES.md`](./RELEASE-NOTES.md): thêm mục version mới, ghi rõ **có migration không** và **có đổi env không**.
+- [ ] Tạo file release note cho lần deploy này: `release/notes/YYYY-MM-DD-<slug>.md` (mẫu: [`notes/2026-08-10-member-reports.md`](./notes/2026-08-10-member-reports.md)) — ghi rõ **có migration không** và **có đổi env không** — rồi thêm một dòng vào bảng chỉ mục [`RELEASE-NOTES.md`](./RELEASE-NOTES.md).
 - [ ] Xác định thứ tự: nếu release có **migration** hoặc **API mới mà web phụ thuộc** → **deploy API trước, web sau**. Nếu chỉ web → chỉ deploy web.
 - [ ] `deploy/env.yaml` (Cloud Run) và Vercel env (`VITE_API_BASE_URL`) còn đúng.
 
