@@ -40,6 +40,13 @@
 | [UC-BGT-05](./003-budgeting/uc-bgt-05-chinh-sua-ngan-sach.md) | Chỉnh sửa ngân sách | US5 | FR-012, FR-013 | ✅ |
 | [UC-BGT-06](./003-budgeting/uc-bgt-06-xoa-ngan-sach.md) | Xóa ngân sách (có xác nhận) | US5 | FR-012, FR-013 | ✅ |
 
+## Feature 008 — Báo Cáo Thu Chi Theo Thành Viên ([BR-008](../business-requirements/BR-008.md) — 📝 draft, mở rộng báo cáo [005-reports](../005-reports/spec.md) / BR-006)
+
+| Mã | Use Case | Truy vết BR (008) | Sơ đồ |
+|----|----------|-------------------|:-----:|
+| [UC-MBR-01](./008-member-reports/uc-mbr-01-xem-bao-cao-theo-thanh-vien.md) | Xem báo cáo thu/chi theo từng thành viên | BR-MBR-001…005, 008, 009 | ✅ |
+| [UC-MBR-02](./008-member-reports/uc-mbr-02-xem-giao-dich-thanh-vien.md) | Xem danh sách giao dịch của một thành viên | BR-MBR-006, 007, 008, 009 | ✅ |
+
 ## Sơ đồ quan hệ (rút gọn)
 
 ![Sơ đồ use case](../diagrams/use-cases.png)
@@ -71,6 +78,10 @@ Thành viên hộ gia đình  (quyền ngang nhau — dữ liệu dùng chung tr
    │     ├── UC-BGT-04  Nhận cảnh báo ngưỡng & vượt  «extend» UC-BGT-03
    │     ├── UC-BGT-05  Chỉnh sửa ngân sách          «extend» UC-BGT-03
    │     └── UC-BGT-06  Xóa ngân sách (có xác nhận)  «extend» UC-BGT-03
+   │
+   ├── Báo cáo theo thành viên (008 — mở rộng 005-reports)
+   │     ├── UC-MBR-01  Xem báo cáo thu/chi theo từng thành viên  ┄ phụ thuộc dữ liệu UC-TRK-02 (đọc giao dịch theo created_by; số liệu suy ra)
+   │     └── UC-MBR-02  Xem danh sách giao dịch của một thành viên  «extend» UC-MBR-01
    │
    └── Tiền đề: Quản lý hộ (feature riêng — BR đề xuất)
          ├── UC-HH-01  Tạo hộ gia đình

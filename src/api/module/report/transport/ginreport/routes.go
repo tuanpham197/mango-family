@@ -62,3 +62,38 @@ func Category(ac appctx.AppContext) gin.HandlerFunc {
 		common.WriteOK(c, res)
 	}
 }
+
+// Members — GET /api/reports/members?from=&to= (feature 008, contracts §/members).
+func Members(ac appctx.AppContext) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		from, to, ok := parseRange(c)
+		if !ok {
+			return
+		}
+		biz := reportbiz.NewGetMembersBiz(reportstorage.NewSQLStore(ac.GetDB()))
+		res, err := biz.Get(c.Request.Context(), middleware.HouseholdID(c), from, to)
+		if err != nil {
+			common.WriteError(c, err)
+			return
+		}
+		common.WriteOK(c, res)
+	}
+}
+
+// Member — GET /api/reports/member/:id?from=&to=&page=&page_size= (feature 008).
+// :id = UUID thành viên hiện tại của hộ hoặc sentinel "former" (drill-in phân trang).
+func Member(ac appctx.AppContext) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		from, to, ok := parseRange(c)
+		if !ok {
+			return
+		}
+		biz := reportbiz.NewGetMemberBiz(reportstorage.NewSQLStore(ac.GetDB()))
+		res, err := biz.Get(c.Request.Context(), middleware.HouseholdID(c), c.Param("id"), from, to, common.PagingFromQuery(c))
+		if err != nil {
+			common.WriteError(c, err)
+			return
+		}
+		common.WriteOK(c, res)
+	}
+}

@@ -50,6 +50,8 @@ func registerRoutes(r *gin.Engine, ac appctx.AppContext) {
 	scoped.GET("/overview", ginoverview.Get(ac))                // 004: tổng hợp giá trị suy ra màn Tổng quan
 	scoped.GET("/reports/overview", ginreport.Overview(ac))     // 005: báo cáo tổng quan
 	scoped.GET("/reports/category/:id", ginreport.Category(ac)) // 005: báo cáo chi tiết danh mục
+	scoped.GET("/reports/members", ginreport.Members(ac))       // 008: báo cáo theo thành viên
+	scoped.GET("/reports/member/:id", ginreport.Member(ac))     // 008: drill-in giao dịch một thành viên
 
 	// WebSocket invalidation hub (D8)
 	r.GET("/ws", middleware.Authenticate(ac), middleware.RequireHousehold(ac), func(c *gin.Context) {

@@ -105,6 +105,46 @@ export interface CategoryReport {
   trend: CategoryTrendPoint[]
 }
 
+// Feature 008 — báo cáo theo thành viên (chỉ đọc, suy ra từ created_by).
+export const FORMER_MEMBER_ID = 'former'
+
+export interface MemberRow {
+  member_id: string // UUID hoặc sentinel 'former'
+  display_name: string
+  is_former: boolean
+  income: number
+  expense: number
+  net: number
+}
+
+export interface MemberTotals {
+  income: number
+  expense: number
+  net: number
+}
+
+export interface MembersReport {
+  from: string
+  to: string
+  members: MemberRow[]
+  totals: MemberTotals
+}
+
+export interface MemberReport {
+  member_id: string
+  display_name: string
+  is_former: boolean
+  from: string
+  to: string
+  income: number
+  expense: number
+  net: number
+  transactions: Transaction[]
+  page: number
+  page_size: number
+  total: number
+}
+
 // Budget (feature 003) — contracts/budget-api.md.
 export type BudgetType = 'CATEGORY' | 'TOTAL'
 export type PeriodType = 'MONTHLY' | 'WEEKLY' | 'ONE_TIME'
