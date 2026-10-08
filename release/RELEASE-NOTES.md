@@ -7,6 +7,7 @@ Nền tảng: Go API (Cloud Run) · Vue SPA (Vercel) · Postgres (Supabase). Quy
 | Ngày deploy | Version | Feature | Migration | File |
 |-------------|---------|---------|:---------:|------|
 | 2026-08-10 | v0.8.0 | 008 — Báo cáo theo thành viên | ❌ | [notes/2026-08-10-member-reports.md](./notes/2026-08-10-member-reports.md) |
+| 2026-10-08 | v0.8.1 | 004 — Tổng tài sản ròng theo tháng hiện tại | ❌ | [notes/2026-10-08-networth-current-month.md](./notes/2026-10-08-networth-current-month.md) |
 
 ## Quy ước tạo release note mới
 

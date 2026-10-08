@@ -34,6 +34,7 @@ type mockReader struct {
 	expense    float64
 	cats       []model.CategorySpending
 	recent     []transactionmodel.ListItem
+	asOfPrev   float64 // as-of đầu tháng trước
 	asOfBefore time.Time
 }
 
@@ -41,9 +42,15 @@ func (m *mockReader) NetWorth(_ context.Context, _ uuid.UUID) (float64, error) {
 	return m.netWorth, nil
 }
 func (m *mockReader) NetWorthAsOf(_ context.Context, _ uuid.UUID, before time.Time) (float64, error) {
-	m.asOfBefore = before
+	if m.asOfBefore.IsZero() || before.After(m.asOfBefore) {
+		m.asOfBefore = before // đầu tháng hiện tại = mốc muộn nhất
+	}
+	if before.Before(m.asOfBeforePrev()) {
+		return m.asOfPrev, nil
+	}
 	return m.asOf, nil
 }
+func (m *mockReader) asOfBeforePrev() time.Time { return time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC) }
 func (m *mockReader) MonthIncomeExpense(_ context.Context, _ uuid.UUID, _, _ time.Time) (float64, float64, error) {
 	return m.income, m.expense, nil
 }
@@ -58,7 +65,8 @@ func TestGetOverview_Assembles(t *testing.T) {
 	now := time.Date(2026, 7, 15, 10, 0, 0, 0, time.UTC)
 	mr := &mockReader{
 		netWorth: 24560000,
-		asOf:     23346000, // cuối tháng trước
+		asOf:     20000000, // đầu tháng hiện tại
+		asOfPrev: 18000000, // đầu tháng trước
 		income:   18200000,
 		expense:  9400000,
 		cats: []model.CategorySpending{
@@ -70,9 +78,9 @@ func TestGetOverview_Assembles(t *testing.T) {
 	s, err := biz.Get(context.Background(), uuid.New(), now)
 	require.NoError(t, err)
 
-	assert.Equal(t, float64(24560000), s.NetWorth)
+	assert.Equal(t, float64(4560000), s.NetWorth) // 24.56M − 20M: biến động trong tháng
 	require.NotNil(t, s.NetWorthChangePercent)
-	assert.Equal(t, 5.2, *s.NetWorthChangePercent) // (24.56M-23.346M)/23.346M ≈ 5.2%
+	assert.Equal(t, 128.0, *s.NetWorthChangePercent) // (4.56M−2M)/2M = +128% so tháng trước
 	assert.Equal(t, float64(18200000), s.Month.Income)
 	assert.Equal(t, float64(9400000), s.Month.Expense)
 	assert.Equal(t, float64(8800000), s.Month.Net) // income - expense

@@ -35,14 +35,22 @@ func NewGetOverviewBiz(store OverviewReader) *GetOverviewBiz {
 func (b *GetOverviewBiz) Get(ctx context.Context, householdID uuid.UUID, now time.Time) (*model.OverviewSummary, error) {
 	p := budgetmodel.ResolvePeriod(budgetmodel.PeriodMonthly, nil, nil, now) // cửa sổ tháng [Start, EndExcl)
 
-	netWorth, err := b.store.NetWorth(ctx, householdID)
+	// Tài sản ròng của THÁNG HIỆN TẠI = biến động ròng số dư trong tháng (không cộng dồn
+	// các tháng trước) = as-of hiện tại − as-of đầu tháng. % so với biến động tháng trước.
+	cur, err := b.store.NetWorth(ctx, householdID)
 	if err != nil {
 		return nil, common.NewInternal(err)
 	}
-	prevEnd, err := b.store.NetWorthAsOf(ctx, householdID, p.Start) // tài sản ròng cuối tháng trước = as-of đầu tháng
+	monthStart, err := b.store.NetWorthAsOf(ctx, householdID, p.Start)
 	if err != nil {
 		return nil, common.NewInternal(err)
 	}
+	prevStart, err := b.store.NetWorthAsOf(ctx, householdID, p.Start.AddDate(0, -1, 0))
+	if err != nil {
+		return nil, common.NewInternal(err)
+	}
+	netWorth := cur - monthStart
+	prevNet := monthStart - prevStart
 	income, expense, err := b.store.MonthIncomeExpense(ctx, householdID, p.Start, p.EndExcl)
 	if err != nil {
 		return nil, common.NewInternal(err)
@@ -68,7 +76,7 @@ func (b *GetOverviewBiz) Get(ctx context.Context, householdID uuid.UUID, now tim
 
 	return &model.OverviewSummary{
 		NetWorth:              netWorth,
-		NetWorthChangePercent: changePercent(netWorth, prevEnd),
+		NetWorthChangePercent: changePercent(netWorth, prevNet),
 		Month:                 model.MonthCashflow{Income: income, Expense: expense, Net: income - expense},
 		CategorySpending:      cats,
 		RecentTransactions:    recent,

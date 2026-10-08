@@ -53,3 +53,4 @@ Toàn bộ điểm mở đã chốt (D27–D33 + kế thừa D1–D26), không c
 ## History
 
 - v1 (2026-07-14): Phase 0 cho stack Go+Vue — D27 (endpoint tổng hợp `/api/overview`), D28 (tài sản ròng + % so tháng trước suy ra), D29 (chi tiêu theo danh mục gộp cây, trước ngân sách), D30 (giao dịch gần đây embed), D31 (đổi trang mặc định `/`=Tổng quan, ledger→`/ledger`; đảo quyết định tạm của 003), D32 (nav 5 mục + Báo cáo placeholder + lối phụ Danh mục), D33 (realtime đa topic). Kế thừa D1–D26.
+- v2 (2026-10-08): D28 **sửa** — `net_worth` = tài sản ròng của THÁNG HIỆN TẠI = biến động ròng số dư trong tháng (`as-of hiện tại − as-of đầu tháng`), không còn cộng dồn; % so với biến động tháng trước (`as-of đầu tháng − as-of đầu tháng trước`), `null` khi mẫu số 0. Nhãn thẻ: "Tổng tài sản ròng tháng này".

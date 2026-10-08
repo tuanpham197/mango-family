@@ -83,15 +83,15 @@ test('#8,#12,#21 thứ tự phần: tài sản ròng → Thu/Chi → chi theo da
   expect(bg).toBeLessThan(rt)
 })
 
-// #14 — Tổng tài sản ròng = tổng số dư tài khoản
-test('#14 tài sản ròng khớp tổng số dư tài khoản', async ({ page }) => {
+// #14 — Tài sản ròng tháng này = biến động ròng trong tháng (Thu − Chi tháng)
+test('#14 tài sản ròng tháng này khớp Thu − Chi tháng', async ({ page }) => {
   await login(page, USERS.alice.email)
   await page.goto('/')
   await expect(page.getByTestId('networth-card')).toBeVisible()
   const shown = await readMoney(page, 'networth-amount')
-  const accs = (await (await page.request.get('/api/accounts')).json()).data as Array<{ balance: number }>
-  const expected = accs.reduce((s, a) => s + a.balance, 0)
-  expect(shown).toBe(expected)
+  const ov = (await (await page.request.get('/api/overview')).json()).data as { net_worth: number; month: { net: number } }
+  expect(shown).toBe(ov.month.net)
+  expect(ov.net_worth).toBe(ov.month.net)
 })
 
 // #17 — Giao dịch gần đây hiển thị giao dịch mới nhất

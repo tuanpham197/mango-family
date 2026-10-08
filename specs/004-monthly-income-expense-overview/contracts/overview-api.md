@@ -29,8 +29,8 @@
 }
 ```
 
-- `net_worth` = tổng số dư mọi tài khoản của hộ (view `account_balances` — 002/D14).
-- `net_worth_change_percent` = % thay đổi so tài sản ròng cuối tháng trước (D28); `null` khi không tính được.
+- `net_worth` = tài sản ròng của THÁNG HIỆN TẠI = biến động ròng số dư trong tháng (`Σ account_balances` hiện tại − số dư as-of đầu tháng; D28 v2).
+- `net_worth_change_percent` = % thay đổi so với biến động ròng của tháng trước (D28 v2); `null` khi không tính được.
 - `month.{income,expense,net}` = tổng Thu / Chi / chênh lệch của hộ trong **tháng dương lịch hiện tại**.
 - `category_spending[]` = chi theo **danh mục cha** (gộp con một cấp), tháng hiện tại, `amount>0`, **sắp giảm dần**; `percent = round(amount/month.expense×100)` (D29).
 - `recent_transactions[]` = 5 giao dịch mới nhất của hộ, dạng `ListItem` của 002 (D30).

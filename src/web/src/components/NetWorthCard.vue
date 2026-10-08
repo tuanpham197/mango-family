@@ -1,6 +1,6 @@
 <script setup lang="ts">
-// Thẻ Tổng tài sản ròng (dashboard.png — thẻ đầu tiên): Σ số dư tài khoản + % so
-// tháng trước (ẩn khi null — D28).
+// Thẻ Tổng tài sản ròng THÁNG HIỆN TẠI (dashboard.png — thẻ đầu tiên): biến động ròng
+// số dư trong tháng + % so với tháng trước (ẩn khi null — D28).
 defineProps<{ netWorth: number; changePercent: number | null }>()
 
 function money(n: number) {
@@ -10,7 +10,7 @@ function money(n: number) {
 
 <template>
   <div class="networth" :class="{ negative: netWorth < 0 }" data-testid="networth-card">
-    <div class="nw-label">Tổng tài sản ròng</div>
+    <div class="nw-label">Tổng tài sản ròng tháng này</div>
     <div class="nw-amount" data-testid="networth-amount">{{ money(netWorth) }} đ</div>
     <div
       v-if="changePercent !== null"
